@@ -23,7 +23,7 @@ Create your own worktree before the first edit and run every command from
 inside it:
 
 ```bash
-git fetch --all && git worktree add -b <branch> <path> <base-ref>
+git fetch --all && pilot worktrees add --run <slug> -b <branch> <path> <base-ref>
 ```
 
 `<base-ref>` is `origin/feat/<slug>`, or `<remote>/<base>` when the brief
@@ -36,7 +36,7 @@ Never edit the shared checkout; it may hold another session's uncommitted
 work. Never touch another worktree, for the same reason. A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout. Never `git add -A`, `git commit -a`,
 `git commit --amend`, or a bare `git stash`: each sweeps in or rewrites work
 that is not yours. Stage the files you changed by name.
-Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove with `pilot worktrees remove`.
 Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
 Never write a credential into a tracked file, since a push publishes it; if the project needs an
 environment file such as `.env.local`, copy it from wherever the brief says and confirm
@@ -161,7 +161,7 @@ reported and ended, so you are the branch's only writer. Create your worktree
 from the PR branch:
 
 ```bash
-git fetch --all && git worktree add -b fix/<slice> <path> <remote>/<pr-branch>
+git fetch --all && pilot worktrees add --run <slug> -b fix/<slice> <path> <remote>/<pr-branch>
 ```
 
 Where the brief carries a bug, a kept finding or a red that is a defect

@@ -74,12 +74,14 @@ test('browser QA drops Core Web Vitals and the breakpoint sweep as standing chec
 // ui-design-workflow S6 (2026-11-22) raised it from 5168.25 to the measured 5183.75 (spec 4, 11; L8): "On any surface load `pilot:ui-design` and walk its checklists.", 15.75 (5168 to 5183.75).
 // ui-design-workflow S9 (2026-11-22) raised it from 5183.75 to the measured 5257.5 (spec 6, 9; L8): the difference-list question named by `Differences:` before the walkthrough, and a Look notes paragraph, 73.75.
 // ui-design-workflow fix round (2026-11-22) raised it from 5257.5 to the measured 5264 (L8): the walkthrough post sets `ticket`, so the Differences refusal runs, 6.5.
-test('QA\'s own share of its prompt stays at or under 5264 tokens, with the checklists loaded on demand', async (t) => {
+// pr-overview S3 (2026-11-25) raised it from 5264 to the measured 5293.25 (spec 1; A1, L6): a fix that changes what a user sees rewrites the artefact's `## Overview` per `skills/pr-overview`, 29.25.
+// prune-worktrees S6 (2026-11-27) raised it from 5293.25 to the measured 5314 (spec 3, 5; L1, A1): the qa tree by `pilot worktrees add --run`, its teardown and the shell rule by `pilot worktrees remove`, 20.75, measured on top of pr-overview's `## Overview` clause.
+test('QA\'s own share of its prompt stays at or under 5314 tokens, with the checklists loaded on demand', async (t) => {
   const { measure } = await import('../measure-prompt.mjs');
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'qa-share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const qa = rows.find((row) => row.agent === 'pilot-qa');
   const own = (qa.definition + qa.skills + qa.tools) / 4;
-  assert.ok(own <= 5264, `pilot-qa's own share is ${own} tokens`);
+  assert.ok(own <= 5314, `pilot-qa's own share is ${own} tokens`);
 });

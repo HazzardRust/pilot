@@ -16,7 +16,7 @@ use crate::act_deck::DeckAction;
 use crate::app::{State, go};
 use crate::client::Query;
 use crate::prefs::{self, Prefs};
-use crate::theme::{self, space};
+use crate::theme::{self, size, space};
 
 /// The `act::send` key of a notice's ×, before its id; Mark all seen's is `CLEAR_ALL`.
 const CLEAR: &str = "clear-notice-";
@@ -70,6 +70,9 @@ struct Open {
     id: String,
     title: String,
     writes: u32,
+    /// The name of the tab the thread's repository is, empty when it names none.
+    #[serde(default)]
+    tab: String,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -150,7 +153,13 @@ fn line(
 ) -> El {
     let to = id.to_string();
     let clear = format!("{key}-clear");
-    theme::list_row(row())
+    // A list row's height as its least, so a wrapped title grows it.
+    row()
+        .w_full()
+        .min_h(size::row)
+        .pl(space::s3)
+        .pr(space::s4)
+        .items_center()
         .key(key)
         .gap(space::within)
         .child(
@@ -158,8 +167,10 @@ fn line(
                 .font(type_::BODY)
                 .color(t.text)
                 .role("link")
-                .truncate()
+                // deck.css `.notice` wraps, so a long title never hides its " · <tab>" (spec 2).
+                .wrap()
                 .grow(1.0)
+                .min_w(0.0)
                 .on_press(move |s: &mut State| open_thread(s, &to)),
         )
         .child(
@@ -194,12 +205,9 @@ pub fn draw(
         .filter(|one| shown(prefs, &one.id, one.writes))
         .collect();
     let mut panel = col().key("notifications").gap(space::within);
+    // Nothing to show draws blank, as the HTML deck (rune-panes A2).
     if view.notices.is_empty() && unseen.is_empty() {
-        return panel.child(theme::empty(
-            "No notifications.",
-            "notifications-none",
-            dark,
-        ));
+        return panel;
     }
 
     let listed: Vec<(String, u32)> = unseen
@@ -259,7 +267,11 @@ pub fn draw(
         let (id, writes) = (one.id.clone(), one.writes);
         panel = panel.child(line(
             format!("open-{i}"),
-            text(&one.title),
+            text(if one.tab.is_empty() {
+                one.title.clone()
+            } else {
+                format!("{} · {}", one.title, one.tab)
+            }),
             &one.id,
             &t,
             dark,

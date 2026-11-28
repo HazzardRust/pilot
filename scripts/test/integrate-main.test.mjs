@@ -9,6 +9,7 @@
 import '../../deck/test/no-open.mjs';
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed as seedHistory } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,46 +23,31 @@ const { githubHost } = await import('../../deck/host-github.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
-function commitFile(work, file, text, message) {
-  fs.writeFileSync(path.join(work, file), text);
-  git(work, 'add', file);
-  git(work, 'commit', '-q', '-m', message);
-}
-
-/** `branch` merged into `into` with `message`, as a two-parent commit, pushed from `seed`. */
-function mergeInto(seed, into, branch, message) {
-  git(seed, 'fetch', '-q', 'origin');
-  git(seed, 'checkout', '-q', into);
-  git(seed, 'reset', '-q', '--hard', `origin/${into}`);
-  git(seed, 'merge', '-q', '--no-ff', '-m', message, `origin/${branch}`);
-  git(seed, 'push', '-q', 'origin', into);
-}
-
 /**
  * trunk; pilot from trunk carrying another feature x's landing; feat/a and feat/b cut from trunk, feat/c cut
- * from feat/a. `clone(branch, slug, base)` checks one out with its run record saying `base`.
+ * from feat/a. `clone(branch, slug, base)` checks one out with its run record saying `base`. `next` holds the
+ * commits the tests push, seeded up front and left unreferenced on origin; `move(branch, sha)` sets origin's branch
+ * to one, as a push of it would.
  */
 function stackRepos(t) {
-  const { root, origin, seed } = gitFixture(t, 'integrate-main:stackRepos', (dir) => {
-    const origin = path.join(dir, 'origin.git');
-    const seed = path.join(dir, 'seed');
-    git(dir, 'init', '--bare', '-b', 'trunk', origin);
-    git(dir, 'clone', '-q', origin, seed);
-    git(seed, 'checkout', '-q', '-b', 'trunk');
-    commitFile(seed, 'trunk.txt', 'trunk\n', 'trunk');
-    git(seed, 'push', '-q', 'origin', 'trunk', 'trunk:pilot');
-    git(seed, 'checkout', '-q', '-b', 'feat/x');
-    commitFile(seed, 'x.txt', 'x\n', 'feat/x: x.txt');
-    git(seed, 'push', '-q', 'origin', 'feat/x');
-    mergeInto(seed, 'pilot', 'feat/x', 'Merge feat/x into pilot');
-    for (const [branch, from] of [['feat/a', 'origin/trunk'], ['feat/b', 'origin/trunk'], ['feat/c', 'origin/feat/a']]) {
-      git(seed, 'fetch', '-q', 'origin');
-      git(seed, 'checkout', '-q', '-b', branch, from);
-      commitFile(seed, `${branch.slice(5)}.txt`, `${branch}\n`, `${branch}: ${branch.slice(5)}.txt`);
-      git(seed, 'push', '-q', 'origin', branch);
-    }
-    return { root: dir, origin, seed };
+  const { root, origin, next } = gitFixture(t, 'integrate-main:stackRepos', (dir) => {
+    const feature = (branch, from) => ({ branch, from, files: { [`${branch.slice(5)}.txt`]: `${branch}\n` }, message: `${branch}: ${branch.slice(5)}.txt` });
+    const { origin, sha } = seedHistory(dir, [
+      { branch: 'trunk', files: { 'trunk.txt': 'trunk\n' }, message: 'trunk' },
+      { branch: 'feat/x', from: 'trunk', files: { 'x.txt': 'x\n' }, message: 'feat/x: x.txt' },
+      { branch: 'pilot', from: 'trunk', files: {}, merge: ['feat/x'], message: 'Merge feat/x into pilot' },
+      feature('feat/a', 'trunk'),
+      feature('feat/b', 'trunk'),
+      feature('feat/c', 'feat/a'),
+      { branch: 'next/trunk', from: 'trunk', files: { 'trunk2.txt': 'trunk2\n' }, message: 'trunk 2' },
+      { branch: 'next/pilot-a', from: 'pilot', files: {}, merge: ['feat/a'], message: 'Merge feat/a into pilot' },
+      { branch: 'next/trunk-a', from: 'trunk', files: {}, merge: ['feat/a'], message: 'Merge pull request #5 from feat/a' },
+    ]);
+    git(origin, 'symbolic-ref', 'HEAD', 'refs/heads/trunk');
+    git(origin, 'branch', '-D', 'next/trunk', 'next/pilot-a', 'next/trunk-a');
+    return { root: dir, origin, next: { trunk: sha['next/trunk'], pilotA: sha['next/pilot-a'], trunkA: sha['next/trunk-a'] } };
   });
+  const move = (branch, sha) => git(origin, 'update-ref', `refs/heads/${branch}`, sha);
   const clone = (branch, slug, base) => {
     const work = path.join(root, `work-${slug}`);
     git(root, 'clone', '-q', '-b', branch, origin, work);
@@ -70,7 +56,7 @@ function stackRepos(t) {
     fs.writeFileSync(file, `${JSON.stringify({ slug, branch, base }, null, 2)}\n`);
     return work;
   };
-  return { seed, clone };
+  return { origin, next, move, clone };
 }
 
 const quiet = { install: () => {}, test: `node -e "console.log('ℹ pass 1'); console.log('ℹ fail 0')"`, host: githubHost(() => { throw new Error('no gh'); }) };
@@ -87,11 +73,9 @@ test('a record base of the default branch is not read as a chain', (t) => {
 });
 
 test('the PR range holds only the feature', (t) => {
-  const { seed, clone } = stackRepos(t);
+  const { next, move, clone } = stackRepos(t);
   const work = clone('feat/b', 'b', 'trunk');
-  git(seed, 'checkout', '-q', 'trunk');
-  commitFile(seed, 'trunk2.txt', 'trunk2\n', 'trunk 2');
-  git(seed, 'push', '-q', 'origin', 'trunk');
+  move('trunk', next.trunk);
   assert.deepEqual(baseOf(work, 'origin'), { ref: 'origin/trunk' }, 'an unchained run takes the default branch');
 
   const out = integrate(undefined, { cwd: work, ...quiet });
@@ -108,26 +92,26 @@ test('the PR range holds only the feature', (t) => {
 });
 
 test('a chain outlives its landing on pilot', (t) => {
-  const { seed, clone } = stackRepos(t);
+  const { next, move, clone } = stackRepos(t);
   const work = clone('feat/c', 'c', 'feat/a');
   assert.deepEqual(baseOf(work, 'origin'), { ref: 'origin/feat/a', chained: 'feat/a' });
   assert.throws(() => chainGuard({ cwd: work }), /built on feat\/a, which has not landed/);
 
-  mergeInto(seed, 'pilot', 'feat/a', 'Merge feat/a into pilot');
+  move('pilot', next.pilotA);
   git(work, 'fetch', '-q', 'origin');
   assert.deepEqual(baseOf(work, 'origin'), { ref: 'origin/feat/a', chained: 'feat/a' }, 'landed on pilot, not yet in trunk');
   // The landing guard's end is unchanged (L5): N on pilot first.
   assert.doesNotThrow(() => chainGuard({ cwd: work }));
 
-  mergeInto(seed, 'trunk', 'feat/a', 'Merge pull request #5 from feat/a');
+  move('trunk', next.trunkA);
   git(work, 'fetch', '-q', 'origin');
   assert.deepEqual(baseOf(work, 'origin'), { ref: 'origin/trunk' }, 'a\'s tip is in trunk');
 });
 
 test('a chain whose lower branch is gone ends only once that branch landed', (t) => {
-  const { seed, clone } = stackRepos(t);
+  const { origin, next, move, clone } = stackRepos(t);
   const work = clone('feat/c', 'c', 'feat/a');
-  git(seed, 'push', '-q', 'origin', '--delete', 'feat/a');
+  git(origin, 'branch', '-D', 'feat/a');
   git(work, 'fetch', '-q', '--prune', 'origin');
   assert.deepEqual(baseOf(work, 'origin'), { ref: 'origin/feat/a', chained: 'feat/a' }, 'gone unlanded: still chained');
   assert.throws(() => chainGuard({ cwd: work }), /built on feat\/a, which has not landed/);
@@ -135,11 +119,8 @@ test('a chain whose lower branch is gone ends only once that branch landed', (t)
   assert.equal(gone.ok, false);
   assert.match(gone.line, /: feat\/a is gone from origin and has not landed on pilot; nothing merged or pushed$/);
 
-  // a's landing, from seed's own feat/a, which outlives the delete on origin.
-  git(seed, 'checkout', '-q', 'pilot');
-  git(seed, 'reset', '-q', '--hard', 'origin/pilot');
-  git(seed, 'merge', '-q', '--no-ff', '-m', 'Merge feat/a into pilot', 'feat/a');
-  git(seed, 'push', '-q', 'origin', 'pilot');
+  // a's landing, seeded before the delete on origin.
+  move('pilot', next.pilotA);
   git(work, 'fetch', '-q', '--prune', 'origin');
   assert.deepEqual(baseOf(work, 'origin'), { ref: 'origin/trunk' }, 'gone after landing: the default branch');
 });

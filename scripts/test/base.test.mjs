@@ -6,6 +6,7 @@
 
 // The fixture seam imports fake-home.mjs first and gives every git below its identity.
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -31,20 +32,14 @@ function scratchRepos(t) {
   return gitFixture(t, 'base:scratchRepos', buildScratchRepos);
 }
 
+/** One seed and one clone, on `main`. */
 function buildScratchRepos(root) {
-  const origin = path.join(root, 'origin.git');
+  const { origin } = seed(root, [
+    { branch: 'main', files: {}, message: 'main' },
+    ...['feat/a', 'feat/b'].map((branch) => ({ branch, from: 'main', files: {}, message: branch })),
+  ], { pilot: 'main' });
   const work = path.join(root, 'work');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
   git(root, 'clone', '-q', origin, work);
-  git(work, 'commit', '-q', '--allow-empty', '-m', 'main');
-  git(work, 'push', '-q', 'origin', 'main', 'main:pilot');
-  git(work, 'remote', 'set-head', 'origin', 'main');
-  for (const branch of ['feat/a', 'feat/b']) {
-    git(work, 'checkout', '-q', '-b', branch, 'main');
-    git(work, 'commit', '-q', '--allow-empty', '-m', branch);
-    git(work, 'push', '-q', 'origin', branch);
-  }
-  git(work, 'checkout', '-q', 'main');
   return { origin, work };
 }
 
@@ -54,6 +49,29 @@ async function printed(cwd) {
   const code = await base({ cwd, say: (text) => said.push(text), warn: (text) => warned.push(text) });
   return { code, out: said.join(''), err: warned.join('') };
 }
+
+test('the move from the legacy pilot says so on stderr, with a host and under none', async (t) => {
+  const pinned = process.env.PILOT_BRANCH;
+  delete process.env.PILOT_BRANCH;
+  t.after(() => (pinned === undefined ? delete process.env.PILOT_BRANCH : (process.env.PILOT_BRANCH = pinned)));
+  const moved = 'created octo-pilot from pilot; the legacy pilot is left for you to delete\n';
+
+  const hosted = scratchRepos(t).work;
+  const said = [];
+  const warned = [];
+  const code = await base({ cwd: hosted, say: (text) => said.push(text), warn: (text) => warned.push(text), host: { login: () => 'Octo' } });
+  assert.equal(code, 0, warned.join(''));
+  assert.match(said.join(''), /^base main [0-9a-f]+\n$/, 'stdout is unchanged');
+  assert.equal(warned.join(''), moved);
+
+  const none = scratchRepos(t).work;
+  git(none, 'config', 'pilot.host', 'none');
+  git(none, 'config', 'pilot.branch', 'octo-pilot');
+  const { code: noneCode, out, err } = await printed(none);
+  assert.equal(noneCode, 0, err);
+  assert.match(out, /^base octo-pilot [0-9a-f]+ \(created from pilot\)\n$/);
+  assert.equal(err, moved);
+});
 
 test('base prints the default branch even with open feat/ branches', async (t) => {
   const { work } = scratchRepos(t);

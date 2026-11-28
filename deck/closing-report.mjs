@@ -124,17 +124,14 @@ function mainStep(number, byHand, merged) {
   if (number !== undefined) return `Merge #${number} with a merge commit, when you want main to have it.`;
   // Run host `none` (other-host spec 3): no PR exists to open, so the branch itself is merged by hand.
   if (merged !== undefined) return `Merge ${said(merged)} into main by hand, with a merge commit.`;
-  // A bare branch is on no remote yet (run remote `none`): it is pushed before a PR can name it.
-  if (byHand === 'pilot') return 'Push pilot, then open a PR from pilot to main by hand, and merge it with a merge commit.';
+  // A bare branch is on no remote yet (run remote `none`): it is pushed before a PR can name it. A pilot branch's
+  // name holds no `/`; on a run remote it reads `<remote>/<name>`.
+  if (byHand !== undefined && !byHand.includes('/')) return `Push ${said(byHand)}, then open a PR from ${said(byHand)} to main by hand, and merge it with a merge commit.`;
   if (byHand !== undefined) return `Open a PR from ${said(byHand)} to main by hand, and merge it with a merge commit.`;
   return 'land named no main PR, so check which PR brings pilot to main.';
 }
 
-/** A landing's last human step: other runs' branches are the user's to prune (lander S10, S15). */
-const PRUNE_STEP = "Prune other runs' branches: pilot branches prune --dry-run first.";
-
 /** What stands in for a step or a worktree path that looks like a credential, so the thread and report still post and store none. */
-const REMOVE_WITHHELD = 'Remove a worktree the closing report lists when you are done with it.';
 const STEP_WITHHELD = 'A step is in the run record; it named a credential-shaped value.';
 const LEFT_WITHHELD = 'a worktree whose path looks like a credential (withheld)';
 
@@ -156,19 +153,16 @@ function firstStepOf(gate, method) {
 }
 
 /**
- * A landing's human steps (human-steps spec 1, A5): the feature-PR or main-PR step, the record's recorded steps, one
- * `Remove <path>` per worktree `left`, the prune step. Past 20 the removes fold into one and the
- * recorded steps' overflow into a pointer to the record. Each one line of at most 300 characters; one
- * naming a credential-shaped value is a neutral pointer, since `postSteps` would refuse the thread.
+ * A landing's human steps (human-steps spec 1, A5): the feature-PR or main-PR step, then the record's recorded
+ * steps. A worktree left is the report's to name, never a step. Past 20 the recorded steps' overflow folds into
+ * a pointer to the record. Each one line of at most 300 characters; one naming a credential-shaped value is a
+ * neutral pointer, since `postSteps` would refuse the thread.
  */
-export function stepsOf(record, gate, left, method = 'merge') {
+export function stepsOf(record, gate, method = 'merge') {
   const recorded = (Array.isArray(record?.humanSteps) ? record.humanSteps : []).map((step) => String(step?.text ?? '').trim()).filter(Boolean);
-  const removes = (Array.isArray(left) ? left : []).map((dir) => (findCredential(dir) ? REMOVE_WITHHELD : `Remove ${said(dir)} when you are done with it.`));
-  const over = 2 + recorded.length + removes.length > MAX_HUMAN_STEPS;
-  const tail = over && removes.length > 1 ? [`Remove the ${removes.length} worktrees the closing report lists when you are done with them.`] : removes;
-  const room = MAX_HUMAN_STEPS - 2 - tail.length;
+  const room = MAX_HUMAN_STEPS - 1;
   const kept = recorded.length > room ? [...recorded.slice(0, room - 1), `${recorded.length - room + 1} more steps are in the run record's humanSteps.`] : recorded;
-  return [firstStepOf(gate, method), ...kept, ...tail, PRUNE_STEP].map((text) => ({ text: stepText(text) }));
+  return [firstStepOf(gate, method), ...kept].map((text) => ({ text: stepText(text) }));
 }
 
 /** The `left` line of a git that could not list: the cause's first line when there is one. */
@@ -292,7 +286,7 @@ export function postFilled(fields) {
   const left = worktreesLeft(gate.repo, record.slug);
   // The steps thread before the report (L2), so the report's post leaves the ticket green under it.
   if (!items.some((item) => item.kind === KIND_STEPS && item.ticket === ticket)) {
-    postSteps({ ticket, repo: gate.repo, title: `Human steps: ${said(record.feature ?? record.slug)}`, steps: stepsOf(record, gate, left, methodAt(gate.repo)) });
+    postSteps({ ticket, repo: gate.repo, title: `Human steps: ${said(record.feature ?? record.slug)}`, steps: stepsOf(record, gate, methodAt(gate.repo)) });
   }
   // Filed under the gate2's repository, as the deck's own report was, never the poster's worktree.
   const report = postItem({ ...fields, repo: gate.repo, ...closingReportOf(record, gate, left, pilotClosesOf(listItems(), ticket, gate.repo), blockedStepsOf(ticket)) });

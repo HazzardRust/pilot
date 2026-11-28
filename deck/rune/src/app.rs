@@ -1,7 +1,10 @@
 //! The window's state and its one view: every region drawn from one `View` (spec 6a).
 
+use std::cell::Cell;
+use std::rc::Rc;
+
 use rune::tok;
-use rune::{AppSpec, Cx, El, Titlebar, Tx, Waker, col, row, text};
+use rune::{AppSpec, Cx, El, Key, ScrollSpec, Titlebar, Tx, Waker, col, row, text};
 
 use crate::act;
 use crate::client::{Client, Query, View};
@@ -28,6 +31,8 @@ pub struct State {
     pub pending: act::Pending,
     /// The screens the window has left, and the ones it went back from (spec 25).
     pub history: History,
+    /// The centre viewport's offset as last drawn, which Up and Down step from (A5).
+    pub centre_y: Rc<Cell<f32>>,
 }
 
 impl State {
@@ -98,20 +103,56 @@ fn visit(s: &mut State, query: Query) {
     s.query = query;
 }
 
-/// The window's keys: Alt+Left and Alt+Right walk the history, the rest are the thread's. A focused
-/// field or control keeps its keys.
+/// The window's keys: Alt+Left and Alt+Right walk the history, Escape and Left are the thread's,
+/// and the page keys, Home, End, Up and Down scroll the centre (A5). A focused field or control
+/// keeps its keys.
 pub fn key(s: &mut State, ev: &rune::KeyEvent, tx: &mut Tx) -> bool {
     // A text field takes Alt+arrows itself and does not pass them on; a clicked button does, so
     // the history keys still work after any click.
     if ev.mods.alt {
         match ev.key {
-            rune::Key::Left => back(s),
-            rune::Key::Right => forward(s),
+            Key::Left => back(s),
+            Key::Right => forward(s),
             _ => return false,
         }
         return true;
     }
-    regions::thread::key(s, ev, tx)
+    regions::thread::key(s, ev, tx) || scroll(s, ev, tx)
+}
+
+/// The centre viewport's key prefix (L4); `centre_key` adds the screen and the thread.
+pub const CENTRE: &str = "centre-scroll";
+
+/// One viewport per screen and thread: a thread opened anew starts at its bottom, and a live
+/// refetch of the same one keeps its offset (L4).
+fn centre_key(q: &Query) -> String {
+    format!("{CENTRE}-{}-{}", q.screen, q.id.as_deref().unwrap_or(""))
+}
+
+/// Up and Down's step, a browser's arrow step.
+const STEP: f32 = 40.0;
+
+/// The centre's text fields: the reply box, and the header's new-deck path.
+const FIELDS: [&str; 2] = ["reply-text", "add-deck-path"];
+
+/// The centre's scroll keys, heard only with nothing focused: a focused control's own scroll
+/// view takes the page keys, Home and End from Rune. A centre field's editor keeps the rest, and
+/// the page keys it passes on are dropped here, or Rune would page the centre (spec 8a).
+fn scroll(s: &State, ev: &rune::KeyEvent, tx: &mut Tx) -> bool {
+    if let Some(focused) = tx.focused() {
+        return FIELDS.contains(&focused) && matches!(ev.key, Key::PageUp | Key::PageDown);
+    }
+    let key = centre_key(&s.query);
+    match ev.key {
+        Key::PageUp => tx.scroll_page(key, -1),
+        Key::PageDown => tx.scroll_page(key, 1),
+        Key::Home => tx.scroll_to_y(key, 0.0),
+        Key::End => tx.scroll_to_bottom(key),
+        Key::Up => tx.scroll_to_y(key, s.centre_y.get() - STEP),
+        Key::Down => tx.scroll_to_y(key, s.centre_y.get() + STEP),
+        _ => return false,
+    }
+    true
 }
 
 /// `root` with the mouse's side buttons wired to `back` and `forward`, wherever on it they press.
@@ -134,8 +175,8 @@ pub struct Start {
 
 const OPEN: &str = "--open";
 /// The screens `/api/view` serves; deck/view/index.mjs `SCREENS` and deck/rune/surface.json
-/// `screens` name the same three.
-const SCREENS: [&str; 3] = ["home", "thread", "items"];
+/// `screens` name the same four.
+const SCREENS: [&str; 4] = ["home", "thread", "items", "archive"];
 
 impl Start {
     /// `pilot-deck`'s own flag out of `args` (without the program name): `--open`, at most once,
@@ -308,6 +349,7 @@ pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
             // Data the server brought lands instantly unless asked: a card arriving live springs in (spec 5).
             tx.animated();
             s.view = view;
+            s.regions.archive.new_view();
             s.down = false;
             true
         }
@@ -319,10 +361,14 @@ pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
 
 /// The window: the side strips around the centre column (`layout`).
 pub fn view(s: &State, cx: &mut Cx<State>) -> El {
+    // Text and fields given no colour draw in the page's ink, not Rune's white.
+    cx.foreground(theme::tokens(cx.system_dark()).text);
     layout::strips(s, cx)
 }
 
-/// The centre column's region slots, top to bottom; the side panels are `layout`'s.
+/// The centre column's region slots, top to bottom; the side panels are `layout`'s. The tabs
+/// header stays put and the rest scrolls in one viewport (L4, A5): a thread's from its bottom,
+/// following new messages while there, every other screen's from its top.
 pub fn center(s: &State, cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
     let t = tok::theme(dark);
@@ -365,17 +411,53 @@ pub fn center(s: &State, cx: &mut Cx<State>) -> El {
         &s.pending,
         cx,
     )));
+    // The archive lists its own rows, or with a row's `id` draws that row's detail instead (A3).
+    let archive_list = s.query.screen == "archive" && s.query.id.is_none();
+    // The archive's bar stays put beside the tabs while its list scrolls (archive-page S19): still one
+    // viewport (L4), the bar above it.
+    if archive_list
+        && let Some(band) =
+            regions::archive::band(region("archive"), &r.archive, s.prefs.archive_sort, cx)
+    {
+        screen = screen.child(band);
+    }
     // The queue is the home page's and the thread page lists no settled threads
     // (view/queue.mjs, history.mjs): a region a screen withholds is not drawn, rather than saying
     // there is nothing in it.
+    let at = s.centre_y.clone();
+    let mut body = col()
+        .key(centre_key(&s.query))
+        .w_full()
+        .grow(1.0)
+        .min_h(space::s0)
+        .gap(space::between)
+        .scroll(ScrollSpec {
+            stick_bottom: s.query.screen == "thread",
+        })
+        .on_scroll_offset(move |pos| at.set(pos.offset[1]));
     if s.query.screen == "home" {
-        screen = screen.child(regions::queue::draw(region("queue"), &r.queue, cx));
+        body = body.child(regions::queue::draw(region("queue"), &r.queue, cx));
     }
-    screen = screen
-        .child(regions::thread::draw(region("thread"), &r.thread, cx))
-        .child(regions::reply::draw(region("reply"), &r.reply, cx));
-    if s.query.screen != "thread" {
-        screen = screen.child(regions::history::draw(region("history"), &r.history, cx));
+    // The archive has no thread or reply: their empty slots would each still take a `between` gap
+    // above it, 48 px between the tabs and the archive's bar (archive-page S18).
+    if s.query.screen != "archive" {
+        body = body
+            .child(regions::thread::draw(region("thread"), &r.thread, cx))
+            .child(regions::reply::draw(region("reply"), &r.reply, cx));
     }
-    screen
+    // The archive withholds history's rows (archive-page L11).
+    if archive_list {
+        body = body.child(regions::archive::draw(
+            region("archive"),
+            &r.archive,
+            s.prefs.archive_sort,
+            cx,
+        ));
+    } else if s.query.screen == "archive" {
+        let detail = regions::archive_detail::Detail::of(region("archiveDetail"));
+        body = body.child(regions::archive_detail::draw(&detail, cx));
+    } else if s.query.screen != "thread" {
+        body = body.child(regions::history::draw(region("history"), &r.history, cx));
+    }
+    screen.child(body)
 }

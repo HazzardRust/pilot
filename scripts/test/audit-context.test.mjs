@@ -6,7 +6,7 @@
  * test; the real `~/.claude` is never read.
  */
 
-import './lib/git-fixture.mjs';
+import { gitFixture } from './lib/git-fixture.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -39,10 +39,12 @@ function tempDir(t, prefix) {
   return dir;
 }
 
-/** A temp repo, git-initialized so `git ls-files` reflects the given tracked files. */
+/** A temp repo, git-initialized once per file, so `git ls-files` reflects the given tracked files. */
 function tempRepo(t, files) {
-  const dir = tempDir(t, 'pilot-audit-context-');
-  execFileSync('git', ['init', '--quiet'], { cwd: dir });
+  const dir = gitFixture(t, 'audit-context:empty', (root) => {
+    execFileSync('git', ['init', '--quiet'], { cwd: root });
+    return root;
+  });
   writeTree(dir, files);
   execFileSync('git', ['add', '-A'], { cwd: dir });
   return dir;

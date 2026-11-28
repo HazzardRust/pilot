@@ -127,6 +127,44 @@ test('over the ceiling the gate names the top three owners', async (t) => {
   assert.doesNotMatch(under, /spawns over/);
 });
 
+test('a run over either ceiling is red', async (t) => {
+  const { runGate, SPAWN_CEILING, GIT_CEILING } = await import(GATE);
+  const gate = (git, node) => {
+    const file = spawnFile(t, []);
+    const out = [];
+    const write = t.mock.method(process.stdout, 'write', (text) => out.push(text) && true);
+    let status;
+    try {
+      status = runGate([], {
+        spawns: file,
+        read: () => [],
+        slot: () => ({ slot: 1, release() {} }),
+        spawn: () => {
+          const lines = [...Array(git).fill('1 git a.test.mjs'), ...Array(node).fill('1 node a.test.mjs')];
+          fs.writeFileSync(file, lines.map((line) => `${line}\n`).join(''));
+          return { status: 0 };
+        },
+      });
+    } finally {
+      write.mock.restore();
+    }
+    return { out: out.join(''), status };
+  };
+  const total = gate(5_000, SPAWN_CEILING + 1 - 5_000);
+  assert.match(total.out, new RegExp(`^spawns over ${SPAWN_CEILING}; most: a\\.test\\.mjs ${SPAWN_CEILING + 1}$`, 'm'));
+  assert.doesNotMatch(total.out, /git over/);
+  assert.equal(total.status, 1);
+  const git = gate(GIT_CEILING + 1, 0);
+  assert.match(git.out, new RegExp(`^git over ${GIT_CEILING}$`, 'm'));
+  assert.doesNotMatch(git.out, /spawns over/);
+  assert.equal(git.status, 1);
+  const node = SPAWN_CEILING - GIT_CEILING;
+  const edge = gate(GIT_CEILING, node);
+  assert.match(edge.out, new RegExp(`^spawns ${SPAWN_CEILING} \\(node ${node}, git ${GIT_CEILING}, other 0\\)$`, 'm'));
+  assert.doesNotMatch(edge.out, /over/);
+  assert.equal(edge.status, 0);
+});
+
 test("a test's node child inherits its owner", (t) => {
   const file = spawnFile(t, []);
   const counter = pathToFileURL(path.join(HERE, '..', 'count-spawns.mjs')).href;

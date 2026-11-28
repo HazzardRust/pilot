@@ -30,7 +30,7 @@ const FACADES = {
     'KIND_CHAT', 'KIND_CREW_HANDOFF', 'KIND_GATE1', 'KIND_GATE2', 'KIND_HANDOFF', 'KIND_LESSON', 'KIND_QUESTION',
     'KIND_REPORT', 'KIND_SIGNOFF', 'KIND_STEPS', 'KIND_TICKET', 'KIND_USER', 'KIND_WALKTHROUGH', 'LANE_STATES', 'MAX_OPTIONS', 'MAX_SCREENS',
     'MAX_SLICE_CHARS', 'NOTE_SEPARATOR', 'NOT_YET', 'OWNER_ANSWER_MS', 'OWNER_KINDS', 'OWNER_PICK_UP_MS',
-    'PASS_KINDS', 'POSTABLE_KINDS', 'RECORD_KINDS', 'REOPENED', 'SIGN_OFF', 'SILENT_KINDS', 'STANDING_KINDS', 'TEACH_ME',
+    'PASS_KINDS', 'POSTABLE_KINDS', 'RECORD_KINDS', 'REOPENED', 'SIGN_OFF', 'SILENT_KINDS', 'STANDING_KINDS', 'STEPS_WAITING', 'TEACH_ME',
     'TICKET_STATES', 'accentOf', 'appearsInYours', 'askFor', 'authorKind', 'buttonsFor', 'chosenOf', 'coPilotStateOf', 'extraFieldsFor',
     'gate2Blockers', 'handsTo', 'holdsGates', 'inHandOf', 'isAnswered', 'isBehind', 'isBlocking', 'isChainHandoff', 'isGate', 'isKnownKind', 'isLanding', 'isOpen', 'isPaused',
     'isQueued', 'isRecord', 'isShortPath', 'isStanding', 'isUnacknowledged', 'laneOfState', 'lastSaid', 'lastSaidAt', 'livePhaseOf', 'liveTicketOf',

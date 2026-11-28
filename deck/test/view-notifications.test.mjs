@@ -47,7 +47,7 @@ test('the notices are the page\'s', () => {
   assert.deepEqual(view.notices.map(({ id }) => id), page.notices);
   assert.deepEqual(view.open.map(({ id, writes }) => ({ id, writes })), page.open);
   assert.deepEqual(view.notices[0], { id: newer.id, kind: 'question', title: newer.title, resolution: 'decided', href: `/thread/${newer.id}`, at: Date.parse(newer.resolvedAt) });
-  assert.deepEqual(view.open[0], { id: spoken.id, title: 'Which <port>?', href: `/thread/${spoken.id}`, writes: 3 });
+  assert.deepEqual(view.open[0], { id: spoken.id, title: 'Which <port>?', href: `/thread/${spoken.id}`, writes: 3, tab: 'pilot' });
 });
 
 test('a closed notice reads as the page\'s: kind · title · the resolution\'s first line, an id read as its title', () => {
@@ -64,6 +64,16 @@ test('a closed notice reads as the page\'s: kind · title · the resolution\'s f
 test('an empty deck has nothing to notify', () => {
   assert.deepEqual(notificationsView(reads([]), {}), { notices: [], open: [] });
   assert.equal(renderNotifications([], [], '/'), '');
+});
+
+test('an open notice carries its tab\'s name, empty when its repo names no tab', () => {
+  const THEIRS = path.join('D:', 'work', 'kettle');
+  const known = aQuestion('itm_0000000000d1', { repo: THEIRS });
+  const nameless = aQuestion('itm_0000000000d2', { repo: '' });
+
+  const { open } = notificationsView(reads([known, nameless]), {});
+
+  assert.deepEqual(open.map(({ id, tab }) => ({ id, tab })), [{ id: nameless.id, tab: '' }, { id: known.id, tab: 'kettle' }]);
 });
 
 test('the region is the view\'s notifications', () => {

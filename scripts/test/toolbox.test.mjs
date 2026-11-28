@@ -180,7 +180,7 @@ test('every toolbox header names one upstream version, so a re-sync moves them t
   // skills/ also holds the methodology skills and the taste pass, which keep their
   // own ledgers; only this slice's files are held to the toolbox upstream.
   const { vendored } = checkProvenance(ROOT, ['agents', 'skills', 'rules']);
-  const toolbox = vendored.filter((rel) => !['vendor/methodology.md', 'vendor/taste.md'].includes(parseHeader(read(rel)).ledger));
+  const toolbox = vendored.filter((rel) => !['vendor/methodology.md', 'vendor/taste.md', 'vendor/pr-overview.md'].includes(parseHeader(read(rel)).ledger));
   assert.notEqual(toolbox.length, 0);
   for (const rel of toolbox) {
     const header = parseHeader(read(rel));

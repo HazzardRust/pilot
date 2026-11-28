@@ -8,6 +8,8 @@ import { execFile } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 
+import { git as gitSync, pilotBranch } from '../scripts/pilot-branch.mjs';
+
 const GIT_TIMEOUT_MS = 20_000;
 /** A plan's commit sha, as a plan, a re-cut mark and a replan name it. */
 export const SHA = /^[0-9a-f]{7,40}$/;
@@ -175,7 +177,7 @@ async function driftOf(repoDir, plan) {
     // Origin's branches into its remote-tracking refs and nothing else, whatever `remote.origin.fetch` says; no submodule's remote.
     await must(['fetch', '--quiet', '--no-recurse-submodules', 'origin', '+refs/heads/*:refs/remotes/origin/*']);
     const remote = `refs/remotes/origin/${branch}`;
-    const pilot = 'refs/remotes/origin/pilot';
+    const pilot = `refs/remotes/origin/${pilotBranch((args) => gitSync(repoDir, ...args))}`;
     // A branch deleted on origin, or a sha no object here names, leaves the plan nowhere on its branch.
     if ((await git(['show-ref', '--verify', '--quiet', remote])).code !== 0) return { state: 'gone', sha };
     if ((await git(['rev-parse', '--verify', '--quiet', `${sha}^{commit}`])).code !== 0) return { state: 'gone', sha };

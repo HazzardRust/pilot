@@ -60,8 +60,9 @@ Ask these one at a time, in your own words, and wait for the answer before actin
 5. **Where do their repositories live?** The pilot opens its pull requests, reads their
    state and posts its comments on the host the repository is on. `github` is the default
    and needs `gh`; `gitlab` opens merge requests with `glab`; `none` is plain git with no
-   host: no host CLI starts, a feature is a branch landed on `pilot`, and they merge `pilot`
-   into their main branch by hand. The
+   host: no host CLI starts, so no login names their pilot branch and they set it once per
+   repository (`git config pilot.branch <name>-pilot`); a feature is a branch landed on it, and
+   they merge it into their main branch by hand. The
    answer is the name step 6b writes; `pilot host <name>` changes it later, and
    `pilot host <name> --local` sets one repository apart. On a run over an earlier install,
    `pilot host` with no name prints the host in force: offer that as the default.

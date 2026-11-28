@@ -210,13 +210,17 @@ test('the command prints the table, and --json prints the rows', (t) => {
 // handoff-no-wait S1 (2026-11-23) lowered it from 12069.5 to the measured 12053 (spec 1; L2): the hand-off pause's queued-release clause goes, and the hand-off section says a live co-pilot is sent nothing, net -4.
 // handoff-no-wait S5 (2026-11-23) raised it from 12053 to the measured 12066.5 (spec 3, 4; L5): the first-turn rule sends a live co-pilot the notice's `resync` line by its id if it names one, 13.5.
 // Merge origin/pilot 8391b00 into feat/handoff-no-wait (2026-11-23) set it to the measured 12143.75 (L8, L2, L5): ui-design-workflow's step 4 paragraphs and handoff-no-wait's hand-off and first-turn edits both stand, measured together.
+// pr-overview S3 (2026-11-25) raised it from 12143.75 to the measured 12159.75 (spec 3; A6, L6): the trivial-work PR body opens with a `## Overview` written per `skills/pr-overview`, 16.
+// handoff-self-close S1 (2026-11-25) lowered it from 12143.75 to the measured 12142 (spec 7): the crew-handoff clause says the deck closes a ticketed one, and the pilot replies to a press only once it has briefed, -1.75.
+// Merge origin/pilot into feat/pr-overview (2026-11-25) set it to the measured 12158 (spec 3, 7): pr-overview's `## Overview` clause and handoff-self-close's crew-handoff edit both stand, measured together.
+// prune-worktrees S6 (2026-11-27) raised it from 12158 to the measured 12165.5 (spec 3, 5; L1, A1): the shell rule removes with `pilot worktrees remove` and a brief's worktree is made by `pilot worktrees add --run`, net of the steps thread's kept-tree clause, 7.5 measured on the drift merge's wording.
 test('the pilot pin holds at its new number', async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const pilot = rows.find((row) => row.agent === 'pilot');
   const own = (pilot.definition + pilot.skills + pilot.tools) / 4;
-  assert.ok(own <= 12143.75, `pilot's own share is ${own} tokens, over its 12143.75`);
+  assert.ok(own <= 12165.5, `pilot's own share is ${own} tokens, over its 12165.5`);
 });
 
 // research-first S1 raised the explorer's from 2209 to the measured 2409 (L5): `## A research brief` cost 200.5 (2208.5 to 2409), 41 of it the security-review sentence on fetched pages and queries.
@@ -253,11 +257,14 @@ test("the explorer's own share stays at or under its pin", async (t) => {
 // ci-gate S5 (2026-11-20) raised the architect's from 10609 to the measured 10615.75 (spec 4; L6): deck_post's bare `checks: { type: 'string' }`, 6.75.
 // Merge origin/pilot d282a698 into feat/human-steps (2026-11-20) set the architect's to the measured 10634.25: human-steps' `step` and ci-gate's `checks` both stand.
 // ui-design-workflow S9 (2026-11-22) raised the architect's from 10634.25 to the measured 10681.75 (spec 10, 14; L8): step 5's `Fonts:`, `Colour means:` and `Reference:` lines and a Design notes paragraph, 47.75 (10634 to 10681.75).
+// pr-overview S3 (2026-11-25) raised the architect's from 10681.75 to the measured 10694.5 (spec 1; A1, L6): the artefact opens with `## Overview`, written per `skills/pr-overview`, 12.75.
+// Merge feat/pr-overview into pilot 9ce92c8 (2026-11-26) set the architect's to the measured 10696 (spec 1): pr-overview's `## Overview` line and user-pilot-branch S8's "your pilot branch" wording both stand, measured together.
+// prune-worktrees S6 (2026-11-27) raised the architect's from 10696 to the measured 10767.5 (spec 3, 5; L1, A1): the design and feat trees by `pilot worktrees add --run`, a re-cut's re-add from `<remote>/design/<slug>` and the shell rule's `pilot worktrees remove`, 71.5.
 test("the architect's own share stays at or under its pin", async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const row = rows.find((row) => row.agent === 'pilot-architect');
   const own = (row.definition + row.skills + row.tools) / 4;
-  assert.ok(own <= 10681.75, `pilot-architect's own share is ${own} tokens, over its 10681.75`);
+  assert.ok(own <= 10767.5, `pilot-architect's own share is ${own} tokens, over its 10767.5`);
 });

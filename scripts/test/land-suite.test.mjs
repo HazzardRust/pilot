@@ -6,7 +6,9 @@
  * runs since it. `gh` is faked; the landing runs against a scratch bare "origin".
  */
 
+import { gitFixture } from './lib/git-fixture.mjs';
 import { repos, land, fakeGh, git, commitFile, mainSays } from './lib/land-repos.mjs';
+import { seed as seedHistory } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -51,15 +53,23 @@ test('the feature merge is the full run', (t) => {
  * called, and `feat/a` cut from it changing only `a.txt`, so no trigger file stands in the feature's diff.
  */
 function suiteOnPilot(t) {
-  const { seed, clone } = repos(t);
-  const trace = path.join(path.dirname(seed), 'suite-trace.txt');
-  commitFile(seed, 'run.mjs', `import fs from 'node:fs';\nfs.appendFileSync(${JSON.stringify(trace)}, process.argv.slice(2).join(' ') + '\\n');\nconsole.log('ℹ pass 12');\nconsole.log('ℹ fail 0');\n`, 'run');
-  const pkg = { name: 'fixture', version: '1.0.0', scripts: { test: 'node run.mjs full', 'test:changed': 'node run.mjs changed' } };
-  commitFile(seed, 'package.json', `${JSON.stringify(pkg, null, 2)}\n`, 'package');
-  commitFile(seed, 'package-lock.json', `${JSON.stringify({ name: 'fixture', version: '1.0.0', lockfileVersion: 3, requires: true, packages: { '': { name: 'fixture', version: '1.0.0' } } }, null, 2)}\n`, 'lock');
-  git(seed, 'push', '-q', 'origin', 'main', 'main:pilot');
-  const work = clone('a');
-  return { work, trace, tree: git(work, 'rev-parse', 'HEAD^{tree}') };
+  // Built once per file and restored per test (test-body-git S11): four tests start from it.
+  return gitFixture(t, 'land-suite:on-pilot', (dir) => {
+    const trace = path.join(dir, 'suite-trace.txt');
+    const pkg = { name: 'fixture', version: '1.0.0', scripts: { test: 'node run.mjs full', 'test:changed': 'node run.mjs changed' } };
+    // The commits the porcelain build made on main and pushed to pilot, and feat/a cut from it, in one fast-import.
+    const { origin, sha } = seedHistory(dir, [
+      { branch: 'main', files: { 'shared.txt': 'one\n' }, message: 'main' },
+      { branch: 'main', files: { 'run.mjs': `import fs from 'node:fs';\nfs.appendFileSync(${JSON.stringify(trace)}, process.argv.slice(2).join(' ') + '\\n');\nconsole.log('ℹ pass 12');\nconsole.log('ℹ fail 0');\n` }, message: 'run' },
+      { branch: 'main', files: { 'package.json': `${JSON.stringify(pkg, null, 2)}\n` }, message: 'package' },
+      { branch: 'main', files: { 'package-lock.json': `${JSON.stringify({ name: 'fixture', version: '1.0.0', lockfileVersion: 3, requires: true, packages: { '': { name: 'fixture', version: '1.0.0' } } }, null, 2)}\n` }, message: 'lock' },
+      { branch: 'feat/a', files: { 'a.txt': 'a\n' }, message: 'feat a' },
+    ], { pilot: 'main' });
+    const work = path.join(dir, 'a');
+    git(dir, 'clone', '-q', '-b', 'feat/a', origin, work);
+    fs.writeFileSync(path.join(work, '.git', 'refs', 'heads', 'main'), `${sha.main}\n`);
+    return { work, trace, tree: git(work, 'rev-parse', 'HEAD^{tree}') };
+  });
 }
 
 const OSES = ['ubuntu-latest', 'windows-latest', 'macos-latest'];
@@ -99,8 +109,10 @@ test('a proof that cannot be read is no proof: the landing runs the full suite a
   // The first read of pilot's tip, the proof's base, answers no sha: provenTree throws before it asks the host.
   let first = true;
   const garbled = (args) => {
-    if (first && args[0] === 'rev-parse' && args.length === 2 && args[1].endsWith('/pilot')) return ((first = false), 'not-a-sha');
-    return git(work, ...args);
+    const said = git(work, ...args);
+    // The tip read is the for-each-ref snapshot's pilot line (land-batching S2); garble that line, first snapshot only.
+    if (!first || args[0] !== 'for-each-ref' || !/ refs\/remotes\/origin\/pilot$/m.test(said)) return said;
+    return ((first = false), said.replace(/^\S+(?= refs\/remotes\/origin\/pilot$)/m, 'not-a-sha'));
   };
 
   const said = mainSays([], { cwd: work, git: garbled, host: proving(host, tree) });

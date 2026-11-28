@@ -7,6 +7,7 @@
 // The fixture seam imports fake-home.mjs first and gives every git below its identity.
 import { gitFixture } from './lib/git-fixture.mjs';
 import { FAKE_HOME } from './lib/fake-home.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -43,34 +44,25 @@ function plantedSuite(t) {
   return `node --test --test-reporter=spec "${file}"`;
 }
 
-/** A bare origin with main and pilot, main one commit ahead, and a clone on feat/b. */
+/** A bare origin with main and pilot, main one commit ahead, and a clone on feat/b; `sha` each branch's tip. */
 function repos(t) {
   return gitFixture(t, 'red-line:repos', buildRepos);
 }
 
 function buildRepos(dir) {
-  const origin = path.join(dir, 'origin.git');
-  const seed = path.join(dir, 'seed');
+  // main's first commit is feat/b's and pilot's tip: the history writes it on feat/b and grows main from there.
+  const { origin, sha } = seed(dir, [
+    { branch: 'feat/b', files: { 'one.txt': 'one.txt\n' }, message: 'one.txt' },
+    { branch: 'main', from: 'feat/b', files: { 'two.txt': 'two.txt\n' }, message: 'two.txt' },
+  ], { pilot: 'feat/b' });
   const work = path.join(dir, 'work');
-  const commit = (file) => {
-    fs.writeFileSync(path.join(seed, file), `${file}\n`);
-    git(seed, 'add', file);
-    git(seed, 'commit', '-q', '-m', file);
-  };
-  git(dir, 'init', '--bare', '-b', 'main', origin);
-  git(dir, 'clone', '-q', origin, seed);
-  git(seed, 'checkout', '-q', '-b', 'main');
-  commit('one.txt');
-  git(seed, 'push', '-q', 'origin', 'main', 'main:pilot', 'main:feat/b');
-  commit('two.txt');
-  git(seed, 'push', '-q', 'origin', 'main');
   git(dir, 'clone', '-q', '-b', 'feat/b', origin, work);
-  return { origin, work };
+  return { origin, work, sha };
 }
 
 test('a red sync names its failing test and its log', (t) => {
-  const { origin, work } = repos(t);
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
+  const { origin, work, sha } = repos(t);
+  const pilotTip = sha.pilot;
 
   let message;
   assert.throws(() => sync({ cwd: work, git: (args) => git(work, ...args), test: plantedSuite(t) }), (err) => {
@@ -87,9 +79,9 @@ test('a red sync names its failing test and its log', (t) => {
 });
 
 test('a log that cannot be written is a refusal that leaves nothing merged', (t) => {
-  const { origin, work } = repos(t);
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
-  const before = git(work, 'rev-parse', 'HEAD');
+  const { origin, work, sha } = repos(t);
+  const pilotTip = sha.pilot;
+  const before = sha['feat/b'];
   const logs = path.join(FAKE_HOME, '.claude', 'pilot', 'logs');
   fs.rmSync(logs, { recursive: true, force: true });
   fs.mkdirSync(path.dirname(logs), { recursive: true });
