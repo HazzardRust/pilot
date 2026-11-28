@@ -30,7 +30,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed 6cfa6a68; gate green; ts + security approve (fresh on re-pin); not integrated",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -39,7 +39,7 @@
     },
     {
       "slice": "S5",
-      "state": "integrated",
+      "state": "integrated 2d1c7c8; checks green",
       "after": [
         "S1"
       ],
@@ -90,8 +90,8 @@
     "kept: S1-sec-MEDIUM needed-fix — reuse key omits the test command; put the command in the ledger row and in fits (folded into the S2 fix)",
     "kept: S2-sec-cargo needed-fix — a slice-scope row that skipped cargo is reused as complete; row records cargo skipped, integrate/QA run cargo alone over a reused row"
   ],
-  "next": "integrating S5 9e48750 on c1b6101 (checks green); then checks; S4 rebase + re-pin; S2 rebase + QA half + re-pin",
-  "updatedAt": "2026-11-28T00:43:26.111Z",
+  "next": "integrating S4 7f787fb on 2d1c7c8 (checks green); then checks; S2 rebase onto S4 + QA half + re-pin + fresh ts review; S2 last",
+  "updatedAt": "2026-11-28T01:10:08.097Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -281,6 +281,11 @@
       "what": "every slice re-pins the same two ceiling constants in scripts/gate.mjs, so each later slice conflicts and needs a rebase plus a full-gate re-measure before integrate",
       "evidence": "S2, S4, S6, drift, drift2 each pinned SPAWN_CEILING/GIT_CEILING",
       "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm run test:quiet over 180 s is moved to background; Monitor unavailable and sleep loop blocked, so waits are on completion notices",
+      "evidence": "S4 rebase report"
     }
   ]
 }
