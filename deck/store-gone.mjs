@@ -32,11 +32,18 @@ export function markGone(deck, sourceHost, at) {
   return { ...deck, items };
 }
 
+// Every character PowerShell reads as a single quote: the ASCII one and U+2018 to U+201B.
+const PS_QUOTES = new RegExp(`['${String.fromCodePoint(0x2018)}-${String.fromCodePoint(0x201b)}]`, 'g');
+
 /**
  * One argument as a shell takes it pasted: a plain token as it is, anything else single-quoted, which neither sh nor
- * PowerShell expands (`$`, a backtick, `\`); a quote inside is doubled for PowerShell on win32, `'\''` for sh elsewhere.
+ * PowerShell expands (`$`, a backtick, `\`, `,`, `@`); a quote inside is doubled for PowerShell on win32, every
+ * character it reads as one, and written `'\''` for sh elsewhere.
  */
-const shellArg = (text, platform) => (/^[\w@+=:,./-]+$/.test(text) ? text : `'${text.replace(/'/g, platform === 'win32' ? "''" : "'\\''")}'`);
+const shellArg = (text, platform) => {
+  if (/^[\w+=:./-]+$/.test(text)) return text;
+  return platform === 'win32' ? `'${text.replace(PS_QUOTES, '$&$&')}'` : `'${text.replace(/'/g, "'\\''")}'`;
+};
 
 /** Each worktree a row names with the branch it was on: the feature's (`feat/<slug>` when none is recorded), QA's, each slice's. */
 const worktreesOf = (row) => [

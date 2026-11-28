@@ -71,17 +71,29 @@ test('a missing worktree gets one rebuild line', (t) => {
 });
 
 // A crafted bundle is the input here, so these decks are written as an attacker would write them, not by the deck.
-test("a bundle's host and branch reach the terminal inert", () => {
+test("a bundle's host reaches the landing line inert", () => {
   const deck = { items: [{ id: 'itm_a', replies: [], landing: { state: 'running', pid: 1 } }] };
-  assert.doesNotMatch(markGone(deck, 'evil\x1b[31m‮host', AT).items[0].landing.line, /[\x1b‮]/);
+  const rlo = String.fromCodePoint(0x202e);
+  assert.equal(markGone(deck, `evil\x1b[31m${rlo}host`, AT).items[0].landing.line.split(':')[0], 'landing interrupted on evil?[31m?host');
   assert.match(markGone(deck, { not: 'a host' }, AT).items[0].landing.line, /interrupted on the old machine/);
   assert.equal(deck.items[0].landing.state, 'running', 'the deck passed in is not changed');
+});
 
-  const runs = (branch) => ({ runs: [{ id: 'run_a', repo: path.resolve(os.tmpdir(), 'pilot-gone-r'), worktree: path.resolve(os.tmpdir(), "pilot gone'wt"), branch }] });
-  const [line] = rebuildLines(runs('feat/$(calc)`x`'), () => false);
-  const quote = process.platform === 'win32' ? "''" : "'\\''";
-  assert.ok(line.includes(`gone${quote}wt'`), line);
-  assert.ok(line.endsWith(" 'feat/$(calc)`x`'"), line);
+test("a bundle's branch reaches the rebuild line quoted, or not at all", () => {
+  const runs = (branch) => ({ runs: [{ id: 'run_a', repo: path.resolve(os.tmpdir(), 'pilot-gone-r'), worktree: path.resolve(os.tmpdir(), 'pilot-gone-wt'), branch }] });
+  const branchOf = (branch) => {
+    const [line] = rebuildLines(runs(branch), () => false);
+    return line.slice(line.indexOf('pilot-gone-wt') + 'pilot-gone-wt'.length).replace(/^'? /, '');
+  };
+  const [open, close] = [String.fromCodePoint(0x2018), String.fromCodePoint(0x2019)];
+  // Literal per shell: PowerShell on win32 doubles every single-quote character it reads, sh elsewhere closes and reopens.
+  const expected = process.platform === 'win32'
+    ? { subshell: "'feat/$(calc)`x`'", ascii: "'feat/a''; calc; ''b'", smart: `'feat/a${close}${close}; calc; ${open}${open}b'` }
+    : { subshell: "'feat/$(calc)`x`'", ascii: "'feat/a'\\''; calc; '\\''b'", smart: `'feat/a${close}; calc; ${open}b'` };
+  assert.equal(branchOf('feat/$(calc)`x`'), expected.subshell);
+  assert.equal(branchOf("feat/a'; calc; 'b"), expected.ascii);
+  assert.equal(branchOf(`feat/a${close}; calc; ${open}b`), expected.smart);
+  assert.equal(branchOf('feat/a,b'), "'feat/a,b'");
   assert.deepEqual(rebuildLines(runs('--force'), () => false), [], 'an argument git would read as an option gets no line');
 });
 
