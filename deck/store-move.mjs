@@ -17,6 +17,7 @@ import { emptyMachine, readMachine, rootsOf, writeMachine } from './machine.mjs'
 import { ROOT_NAME, eachStructuredPath, packBundle, storeEntries, unpackBundle } from './store-bundle.mjs';
 import { decodePath, defaultRoots, fromStored } from './store-codec.mjs';
 import { refuseGateHomeWrite, storeDir } from './store-dir.mjs';
+import { markGone, rebuildLines } from './store-gone.mjs';
 import { localDay, setAside } from './store-recovery.mjs';
 
 const USAGE = 'usage: pilot store export [<file>] [--logs]';
@@ -273,6 +274,9 @@ export function importStore(argv, deps = {}) {
     return 0;
   }
 
+  // Nothing of the old machine is waited on here (S6, spec 8): its landings in flight read interrupted.
+  const gone = markGone(JSON.parse(bundle.entries.get('deck.json').toString('utf8')), bundle.manifest.host ?? 'the old machine', now().toISOString());
+  bundle.entries.set('deck.json', Buffer.from(`${JSON.stringify(gone, null, 2)}\n`, 'utf8'));
   const staging = path.join(dir, `.import-${process.pid}-${crypto.randomBytes(6).toString('hex')}`);
   try {
     fs.mkdirSync(dir, { recursive: true });
@@ -312,5 +316,7 @@ export function importStore(argv, deps = {}) {
   out(`imported ${file} into ${dir}: ${deck.items.length} items, ${Array.isArray(deck.records) ? deck.records.length : 0} records, ${archives} month archives`);
   for (const line of rootLines) out(line);
   if (aside) out(`the store it replaced is kept in ${aside}`);
+  // Printed, never run (spec 11): each open run's worktree this machine lacks.
+  for (const line of rebuildLines(fromStored(deck, emptyMachine(), roots), fs.existsSync)) out(`rebuild: ${line}`);
   return 0;
 }

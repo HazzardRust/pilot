@@ -100,6 +100,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `store-core.mjs` | the store's core: reading and writing deck.json, the refusals and validators, added decks |
 | `store-defaults.mjs` | a plain question's default, taken by the deck at 20 minutes; re-exported by `store-items.mjs` |
 | `store-dir.mjs` | where the deck keeps its files, loadable without the store |
+| `store-gone.mjs` | what an imported store keeps of the old machine: its landings in flight read interrupted, and each missing worktree gets a printed rebuild line |
 | `store-items.mjs` | the store's items: posting, replies, the gates, resolving, reopening and closing |
 | `store-move.mjs` | `pilot store export`: the bundle written, `exported.json` marked, and work on no remote listed |
 | `store-recovery.mjs` | the store's backup: `deck.json.bak` kept before each write, and a corrupt store set aside and recovered from it |
