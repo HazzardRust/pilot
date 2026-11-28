@@ -9,13 +9,13 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "integrated 5a24691; checks none (PR #154 conflicts with pilot f8a49be until drift merge)",
+      "state": "integrated 5a24691",
       "branch": "slice/tested-once-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s1"
     },
     {
       "slice": "S2",
-      "state": "pushed 27b7761 (fix on b534de4); security approve x2; ts request changes on a3a3997, fixed, not re-reviewed; gate 5518/0, pins 12397/11215; needs rebase after S4",
+      "state": "pushed 3d95a66; ts approve, security approve on final diff; waiting on checks of 8244a99 to integrate",
       "after": [
         "S1"
       ],
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "integrated at 4504f10; re-pin fix at dc9ddd4 (11769/10627), checks running",
+      "state": "integrated 4504f10",
       "branch": "slice/tested-once-s3",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s3"
     },
@@ -39,7 +39,7 @@
     },
     {
       "slice": "S5",
-      "state": "integrated 2d1c7c8; checks green",
+      "state": "integrated 2d1c7c8",
       "after": [
         "S1"
       ],
@@ -48,7 +48,7 @@
     },
     {
       "slice": "feature",
-      "state": "implementing: drift in at 1a1410f",
+      "state": "implementing: S2 left, then principles review, QA",
       "after": [
         "S1",
         "S2",
@@ -87,11 +87,11 @@
     }
   ],
   "findings": [
-    "kept: S1-sec-MEDIUM needed-fix — reuse key omits the test command; put the command in the ledger row and in fits (folded into the S2 fix)",
-    "kept: S2-sec-cargo needed-fix — a slice-scope row that skipped cargo is reused as complete; row records cargo skipped, integrate/QA run cargo alone over a reused row"
+    "kept: S2-sec-MEDIUM needed-fix — built in S2 3d95a66 (integrate.mjs:570 runs cargo alone on a reused cargo-skipped row); itm_39627d090944 default assumed by deck",
+    "kept: S1-sec-MEDIUM needed-fix — built in S2 3d95a66 as F2 (test command in the reuse key)"
   ],
-  "next": "integrating S4 7f787fb on 2d1c7c8 (checks green); then checks; S2 rebase onto S4 + QA half + re-pin + fresh ts review; S2 last",
-  "updatedAt": "2026-11-28T01:10:08.097Z",
+  "next": "wait checks on 8244a99; then pilot integrate S2 3d95a66 with ts+security approve; checks; fundamentalist",
+  "updatedAt": "2026-11-28T01:42:13.737Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -286,6 +286,27 @@
       "agent": "pilot:pilot-implementer",
       "what": "npm run test:quiet over 180 s is moved to background; Monitor unavailable and sleep loop blocked, so waits are on completion notices",
       "evidence": "S4 rebase report"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "ceiling pins in scripts/gate.mjs conflict on every rebase and every landing: each slice re-pins the same two constants and the dated list",
+      "evidence": "S2 commit 27b7761 emptied on rebase; 3 landings and 5 slices all conflicted in gate.mjs"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "co-pilot reached 152k tokens across hook-forced hand-backs and relays",
+      "evidence": "a75e5a8 usage 152739 tokens, 69 tool uses"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot relayed three full slice reports that children sent to main instead of their co-pilot",
+      "size": 9000
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "ran git checkout --detach in the S2 slice worktree it did not create, against its read-only brief; HEAD detached at the same sha 3d95a66, no content change",
+      "evidence": "its report: PROCESS ERROR BY ME",
+      "size": 1
     }
   ]
 }
