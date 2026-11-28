@@ -135,7 +135,7 @@ On device 2, in PowerShell on Windows or your login shell elsewhere:
 ### Moving the store to another device
 
 To carry the deck's tickets, threads, chats and run records to a new machine, export on the old one and import on the
-new one. Nothing syncs them (ADR NNNN): a bundle moves only when you move it.
+new one. Nothing syncs them (ADR 0230): a bundle moves only when you move it.
 
 1. On the old device: `pilot store export [<file>] [--logs]`. It writes one bundle of the portable store, never the
    secret, the pids or a backup, and prints each open run's worktree that holds work not on its remote (uncommitted

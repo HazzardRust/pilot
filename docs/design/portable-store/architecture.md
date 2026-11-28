@@ -160,7 +160,7 @@ machine file seam has two adapters (a real dir, a test's temp dir). `store-resto
 - L7 Export reads the store files as they are on disk (atomic renames make each file whole) and needs no daemon;
   import refuses while one serves (`storePid`). The exported mark is its own machine-only file `exported.json`,
   so the CLI never races the daemon on `deck.json`.
-- L8 The run's ADR is `docs/adr/NNNN-portable-store.md` (ADR NNNN); ADR 0207's "No store sync" bullet is
+- L8 The run's ADR is `docs/adr/0230-portable-store.md` (ADR 0230); ADR 0207's "No store sync" bullet is
   reworded to point at it.
 
 Gate 1 walk, each closed on its recommended default by the deck at 2026-11-23T01:23Z, not the user's press:
@@ -244,7 +244,7 @@ Width 5; longest stem 5 (S1 → S2 → S4 → S5 → S6). Re-cut 2026-11-28: S9 
 | S5 | A bundle imports on another machine and nothing else gets in | 5, 12 | `deck/store-move.mjs`, `deck/store-bundle.mjs`, `bin/pilot.mjs`, tests | S4 (`unpackBundle`, `store-move.mjs`) | typescript, security | [S5](slices/S5.md) |
 | S6 | An imported store waits on nothing from the old machine | 8, 11 | `deck/store-gone.mjs` (new), `deck/store-move.mjs`, tests | S5 (`importStore`) | typescript | [S6](slices/S6.md) |
 | S7 | The exporting deck warns its queue may live elsewhere | 10 | `deck/exported.mjs` (new), `deck/daemon.mjs`, `deck/doctor.mjs`, tests | S4 (`exported.json`) | typescript | [S7](slices/S7.md) |
-| S8 | The ADRs say the store is exportable, not synced | 6, 7 | `docs/adr/NNNN-portable-store.md` (new), `docs/adr/0207-two-devices.md`, `docs/OPERATING.md` | – | typescript | [S8](slices/S8.md) |
+| S8 | The ADRs say the store is exportable, not synced | 6, 7 | `docs/adr/0230-portable-store.md` (new), `docs/adr/0207-two-devices.md`, `docs/OPERATING.md` | – | typescript | [S8](slices/S8.md) |
 | S9 | The Rune deck keys a repository on the spelling the store answers (added at re-cut) | 1 | `deck/rune/tests/deck/empty.rs` | S1 (`decodePath`, native spelling) | rust | [S9](slices/S9.md) |
 
 Walking skeleton: S1, a copy of the real store read, migrated and read back with every path under a root.
