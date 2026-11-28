@@ -13,6 +13,7 @@ import path from 'node:path';
 
 import { atomicWriteFileSync } from '../hooks/lib/atomic-write.js';
 import { hostPlatform, pathKey } from '../hooks/lib/platform.js';
+import { directoryFor, legacyDirectoryFor } from './audit.mjs';
 import { emptyMachine, readMachine, rootsOf, writeMachine } from './machine.mjs';
 import { ROOT_NAME, packBundle, storeEntries, unpackBundle } from './store-bundle.mjs';
 import { defaultRoots, fromStored } from './store-codec.mjs';
@@ -64,6 +65,23 @@ function decodedDeck(dir) {
 }
 
 /**
+ * Each repository's legacy audit folder name to the name every machine computes (QA J1), for the repositories the
+ * store names; an empty map when the store cannot be read, which `packBundle` then refuses on its own.
+ */
+function auditRenames(dir) {
+  let deck;
+  try {
+    deck = decodedDeck(dir);
+  } catch {
+    return new Map();
+  }
+  const machine = readMachine(dir);
+  const roots = rootsOf(machine, os.homedir(), hostPlatform());
+  const repos = new Set([...(deck.items ?? []), ...(deck.records ?? []), ...(deck.runs ?? [])].map((row) => row?.repo).filter((repo) => typeof repo === 'string' && path.isAbsolute(repo)));
+  return new Map([...repos].map((repo) => [legacyDirectoryFor(repo), directoryFor(repo, roots)]).filter(([from, to]) => from !== to));
+}
+
+/**
  * `pilot store export [<file>] [--logs]`: the bundle written to `<file>`, by default
  * `pilot-store-<host>-<yyyy-mm-dd>.pilotstore` in the cwd, then `exported.json` beside the store; then each piece of
  * work not on a remote and their count. Exit 0 once the bundle is written, whatever the list says (A2); 1 on bad
@@ -89,7 +107,7 @@ export function exportStore(argv, { git, now = () => new Date(), host = os.hostn
     if (parent === pathKey(dir) || parent.startsWith(pathKey(dir) + path.sep)) throw new Error(`${file} is inside the store directory ${dir}; write the bundle elsewhere`);
     // The gate names the home store by its deck.json; the mark beside it is that store's too (as the machine file).
     refuseGateHomeWrite(path.join(dir, 'deck.json'));
-    bundle = packBundle(dir, { logs: parsed.logs, host, now: at });
+    bundle = packBundle(dir, { logs: parsed.logs, host, now: at, auditNames: auditRenames(dir) });
     atomicWriteFileSync(file, bundle.bytes);
   } catch (error) {
     err(`pilot store export: ${error.message}; nothing written`);
@@ -104,6 +122,8 @@ export function exportStore(argv, { git, now = () => new Date(), host = os.hostn
 
   const { counts } = bundle.manifest;
   out(`exported ${file}: ${bundle.bytes.length} bytes, ${counts.items} items, ${counts.records} records, ${counts.archives} month archives`);
+  // Listed, never refused (as A2's unpushed list): a path under no root stays absolute, and an import refuses it (QA B1, L5).
+  for (const where of bundle.rootless) out(`will not import elsewhere: ${printable(where)}`);
   let lines;
   try {
     lines = unpushedLines(decodedDeck(dir), git);
@@ -217,7 +237,7 @@ function importPlan(argv, { storePid, home, platform, hasDrive, maxBytes }) {
   const dir = storeDir();
   const existing = fs.existsSync(dir) ? storeEntries(dir) : [];
   if (existing.length > 0 && !parsed.replace) {
-    throw new Error(`${dir} already holds a store (${existing.length} files); import over it with --replace, which sets them aside under replaced-<date>/`);
+    throw new Error(`${dir} already holds a store (${existing.length} ${existing.length === 1 ? 'file' : 'files'}: ${existing.join(', ')}); import over it with --replace, which sets them aside under replaced-<date>/`);
   }
   refuseGateHomeWrite(path.join(dir, 'deck.json'));
   return { ...parsed, file, dir, bundle, roots, existing };

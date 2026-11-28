@@ -14,6 +14,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { hostPlatform, pathKey } from '../../hooks/lib/platform.js';
+import { directoryFor, legacyDirectoryFor } from '../audit.mjs';
 import { ticketQueueOf } from '../items.mjs';
 import { exportStore, importStore } from '../store-move.mjs';
 import { listItems, postItem, registerRun, setSlices } from '../store.mjs';
@@ -124,6 +125,43 @@ test('an unknown root must be named', (t) => {
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dir, 'machine.json'), 'utf8')).roots, { 'drive-d': target });
 });
 
+test('a path under no root is listed at export and named at import (QA B1)', (t) => {
+  const home = aHome(t, 'source');
+  tempDeck(t);
+  postItem({ kind: 'question', title: 'On a share', body: 'b', repo: '\\\\srv\\share\\repo' });
+  const file = path.join(home, 'moved.pilotstore');
+  const said = [];
+  assert.equal(exportStore([file], { git: quiet, now: NOW, host: 'source-host', out: (line) => said.push(line), err: (line) => said.push(line) }), 0, said.join('\n'));
+  assert.equal(said.filter((line) => line.startsWith('will not import elsewhere: deck.json items[].repo') && line.includes('srv')).length, 1, said.join('\n'));
+  const dir = tempDeck(t);
+  const before = snapshot(dir);
+
+  const refused = anImport([file], aHome(t, 'target'));
+
+  assert.notEqual(refused.code, 0, refused.said);
+  assert.match(refused.said, /under no root/);
+  assert.deepEqual(snapshot(dir), before, '0 files written');
+});
+
+test('an audit folder an older deck named travels under the name the new home reads (QA J1)', (t) => {
+  const home = aHome(t, 'source');
+  const source = tempDeck(t);
+  const repo = path.join(home, 'Projects', 'alpha');
+  postItem({ kind: 'question', title: 'Here', body: 'b', repo });
+  const legacy = path.join(source, 'audits', legacyDirectoryFor(repo));
+  fs.mkdirSync(legacy, { recursive: true });
+  fs.writeFileSync(path.join(legacy, 'record.json'), '{"offers":[],"handoffs":["itm_a"]}\n');
+  const file = path.join(home, 'moved.pilotstore');
+  assert.equal(exportStore([file], { git: quiet, now: NOW, host: 'source-host', out: () => {}, err: () => {} }), 0);
+  const target = aHome(t, 'target');
+  const dir = tempDeck(t);
+
+  assert.equal(anImport([file], target).code, 0);
+
+  const read = path.join(dir, 'audits', directoryFor(path.join(target, 'Projects', 'alpha'), { home: target }), 'record.json');
+  assert.ok(fs.existsSync(read), `${read} among ${fs.readdirSync(path.join(dir, 'audits'))}`);
+});
+
 test('a non-empty store is kept', (t) => {
   const { file } = aBundle(t);
   const home = aHome(t, 'target');
@@ -136,6 +174,8 @@ test('a non-empty store is kept', (t) => {
 
   assert.notEqual(refused.code, 0, refused.said);
   assert.ok(refused.said.includes('--replace'), refused.said);
+  const [, count, listed] = /already holds a store \((\d+) files?: ([^)]*)\)/.exec(refused.said) ?? [];
+  assert.equal(Number(count), listed?.split(', ').length, `the count matches the files it names (QA J4): ${refused.said}`);
   assert.deepEqual(snapshot(dir), before, "the store's bytes unchanged");
 
   const replaced = anImport([file, '--replace'], home);

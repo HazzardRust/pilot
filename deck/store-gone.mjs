@@ -57,11 +57,18 @@ const worktreesOf = (row) => [
 ];
 
 /**
- * Every absolute worktree an open run (a run row, or an unfinished record) names (spec 9, 11), as
- * `{ repo, worktree, branch }` in deck order, not deduplicated: the feature's, QA's and each slice's.
+ * Every absolute worktree an open run names (spec 9, 11): a run row's own, and its repository's newest unfinished
+ * record's, never a record no run is open on (an abandoned run's), as `{ repo, worktree, branch }` in deck order,
+ * not deduplicated: the feature's, QA's and each slice's.
  */
 export function openWorktrees(deck) {
-  const rows = [...(Array.isArray(deck?.runs) ? deck.runs : []), ...(Array.isArray(deck?.records) ? deck.records.map((entry) => isMap(entry?.record) && { ...entry.record, repo: entry.repo }) : [])];
+  const runs = (Array.isArray(deck?.runs) ? deck.runs : []).filter((run) => isMap(run) && typeof run.repo === 'string' && run.finished === undefined);
+  const records = (Array.isArray(deck?.records) ? deck.records : []).filter((entry) => typeof entry?.repo === 'string' && isMap(entry.record) && entry.record.finished === undefined);
+  const newest = [...new Set(runs.map((run) => pathKey(run.repo)))]
+    .map((key) => records.findLast((entry) => pathKey(entry.repo) === key))
+    .filter(Boolean)
+    .map((entry) => ({ ...entry.record, repo: entry.repo }));
+  const rows = [...runs, ...newest];
   return rows
     .filter((row) => isMap(row) && row.finished === undefined)
     .flatMap((row) => worktreesOf(row).map(({ worktree, branch }) => ({ repo: row.repo, worktree, branch })))

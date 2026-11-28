@@ -262,6 +262,9 @@ const identity = (p) => (path.resolve(p) !== path.normalize(p) ? p : realOf(p));
 export const directoryFor = (repo, roots = defaultRoots(os.homedir(), hostPlatform())) =>
   nameOf(encodePath(identity(repo), Object.fromEntries(Object.entries(roots).map(([name, dir]) => [name, identity(dir)]))));
 
+/** The folder name an older deck gave `repo`'s audits, from its absolute key: what `pilot store export` renames (QA J1). */
+export const legacyDirectoryFor = (repo) => nameOf(repoKey(repo));
+
 const TOLD = new Set();
 
 /**
@@ -269,7 +272,7 @@ const TOLD = new Set();
  * Both present: both kept, nothing merged or deleted, the new name read, one line on stderr.
  */
 function renameLegacyDir(repo, dir) {
-  const legacy = path.join(path.dirname(dir), nameOf(repoKey(repo)));
+  const legacy = path.join(path.dirname(dir), legacyDirectoryFor(repo));
   if (legacy === dir || !fs.existsSync(legacy)) return;
   if (fs.existsSync(dir)) {
     if (TOLD.has(dir)) return;

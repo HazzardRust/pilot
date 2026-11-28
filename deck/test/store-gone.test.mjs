@@ -70,6 +70,21 @@ test('a missing worktree gets one rebuild line', (t) => {
   assert.ok(lines[0].includes(gone), lines[0]);
 });
 
+test('an unfinished record no run is open on gets no rebuild line (QA J3)', () => {
+  const at = (name) => path.resolve(os.tmpdir(), `pilot-gone-j3-${name}`);
+  const record = (slug) => ({ slug, branch: `feat/${slug}`, worktree: at(`${slug}-wt`), slices: [{ slice: 'S1', branch: `slice/${slug}-s1`, worktree: at(`${slug}-s1`) }] });
+  const deck = {
+    runs: [{ id: 'run_a', repo: at('open'), slices: [] }],
+    records: [
+      { repo: at('abandoned'), record: record('abandoned') },
+      { repo: at('open'), record: record('older') },
+      { repo: at('open'), record: record('newest') },
+    ],
+  };
+  const lines = rebuildLines(deck, () => false);
+  assert.deepEqual(lines.map((line) => line.split(' ').at(-1)), ['feat/newest', 'slice/newest-s1'], lines.join('\n'));
+});
+
 // A crafted bundle is the input here, so these decks are written as an attacker would write them, not by the deck.
 test("a bundle's host reaches the landing line inert", () => {
   const deck = { items: [{ id: 'itm_a', replies: [], landing: { state: 'running', pid: 1 } }] };

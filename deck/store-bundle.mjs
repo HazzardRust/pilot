@@ -62,12 +62,19 @@ function candidateNames(dir) {
  * one a hand put back from before the split (spec 2), through the codec's own split. Throws, writing nothing, on a
  * missing or older store.
  */
-export function packBundle(dir, { logs = false, host = os.hostname(), now = new Date() } = {}) {
+export function packBundle(dir, { logs = false, host = os.hostname(), now = new Date(), auditNames = new Map() } = {}) {
   const entries = {};
-  for (const name of candidateNames(dir).sort()) {
+  const names = candidateNames(dir).sort();
+  for (const name of names) {
     if (!allowedEntry(name, { logs })) continue;
     const text = fileText(path.join(dir, ...name.split('/')));
-    if (text !== null) entries[name] = text;
+    if (text === null) continue;
+    // An audit folder an older deck named by its absolute path travels under the name every machine computes (QA J1),
+    // unless that name is already here, which is then the one read (audit.mjs `renameLegacyDir`).
+    const [, folder] = /^audits\/([^/]+)\/record\.json$/.exec(name) ?? [];
+    const renamed = folder && auditNames.get(folder);
+    const target = renamed && `audits/${renamed}/record.json`;
+    entries[target && !names.includes(target) && entries[target] === undefined ? target : name] = text;
   }
   if (entries['deck.json'] === undefined) throw new Error(`${path.join(dir, 'deck.json')} is missing; there is no store to export`);
   const deck = JSON.parse(entries['deck.json']);
@@ -86,7 +93,23 @@ export function packBundle(dir, { logs = false, host = os.hostname(), now = new 
     counts: { items: stored.items.length, records: Array.isArray(stored.records) ? stored.records.length : 0, archives: months.length },
     entries: Object.fromEntries(Object.entries(entries).map(([name, text]) => [name, sha256(text)])),
   };
-  return { bytes: zlib.gzipSync(JSON.stringify({ manifest, entries })), manifest };
+  return { bytes: zlib.gzipSync(JSON.stringify({ manifest, entries })), manifest, rootless: rootlessPaths(entries) };
+}
+
+const isAbsoluteAnywhere = (value) => path.win32.isAbsolute(value) || path.posix.isAbsolute(value);
+
+/**
+ * `<entry> <field> <value>` for each structured path of `deck.json` and each month archive that sits under no root
+ * (a UNC share, a posix path on win32): kept absolute here, so an import elsewhere refuses the bundle (QA B1, L5).
+ */
+function rootlessPaths(entries) {
+  const found = [];
+  for (const name of Object.keys(entries).filter((entry) => entry === 'deck.json' || MONTH.test(entry))) {
+    eachStructuredPath(parsedEntry(name, entries[name]), (value, field) => {
+      if (!value.startsWith('@') && isAbsoluteAnywhere(value)) found.push(`${name} ${field} ${JSON.stringify(value)}`);
+    });
+  }
+  return found;
 }
 
 /** A root's name as the deck writes one and `--root` takes one. */
@@ -124,8 +147,8 @@ function checkedRoots(name, doc, roots) {
       roots.add(stored[1]);
     } else if (value.startsWith('@')) {
       throw new Error(`stored path: ${where} names no root a deck writes`);
-    } else if (path.win32.isAbsolute(value) || path.posix.isAbsolute(value)) {
-      throw new Error(`absolute path: ${where} is not a stored path`);
+    } else if (isAbsoluteAnywhere(value)) {
+      throw new Error(`absolute path: ${where} is under no root, so it cannot be placed on this machine; the exporting deck listed it as one that will not import elsewhere`);
     } else if (climbs(value)) {
       throw new Error(`stored path: ${where} climbs out of its root`);
     }
