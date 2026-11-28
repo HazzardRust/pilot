@@ -51,7 +51,13 @@ export function worktreeTree(cwd) {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-tree-'));
   try {
     const copy = path.join(scratch, 'index');
-    if (fs.existsSync(index)) fs.copyFileSync(index, copy);
+    if (fs.existsSync(index)) {
+      fs.copyFileSync(index, copy);
+      // The copy keeps the index's mtime, which git's racy-git rule reads: an entry no older than
+      // it is hashed again, so a same-size edit in that second is seen. Linux's copy is stamped now.
+      const { atime, mtime } = fs.statSync(index);
+      fs.utimesSync(copy, atime, mtime);
+    }
     const env = { ...process.env, GIT_INDEX_FILE: copy };
     gitIn(top, ['add', '-A', '--', '.', `:(exclude,glob)docs/design/*/run.json`], env);
     gitIn(top, ['reset', '-q', 'HEAD', '--', RECORDS], env);

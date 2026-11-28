@@ -133,6 +133,21 @@ test('pilot test reuses a green tree', (t) => {
   assert.equal(rowsOf(home).at(-1).where, 'implementer');
 });
 
+test('a same-size edit right after a run is a changed tree', (t) => {
+  const { cwd } = repo(t);
+  // The index, a.txt's entry in it and the edit all in one second: git tells a same-size,
+  // same-second edit from no edit only by its racy-git rule, an entry no older than the index.
+  const second = new Date('2026-01-01T00:00:00Z');
+  const file = path.join(cwd, 'a.txt');
+  fs.utimesSync(file, second, second);
+  git(cwd, 'update-index', '--refresh');
+  fs.utimesSync(path.join(cwd, '.git', 'index'), second, second);
+  const before = worktreeTree(cwd);
+  fs.writeFileSync(file, 'b\n');
+  fs.utimesSync(file, second, second);
+  assert.notEqual(worktreeTree(cwd), before, 'a.txt rewritten to the same size in the same second');
+});
+
 test('no row from inside the suite', (t) => {
   const { cwd } = repo(t);
   const saved = process.env.PILOT_GATE_HOME_STORE;
