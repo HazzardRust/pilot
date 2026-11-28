@@ -1,0 +1,103 @@
+{
+  "slug": "landed-pr-closed",
+  "feature": "landing leaves no draft PR",
+  "ticket": "itm_8ae644730463",
+  "branch": "feat/landed-pr-closed",
+  "base": "hazzardrust-pilot",
+  "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed",
+  "artefact": "docs/design/landed-pr-closed/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A main-cut run's landing merges its own PR",
+      "state": "pushed 5257280",
+      "branch": "feat/landed-pr-closed-s1",
+      "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s1"
+    },
+    {
+      "slice": "S2 Every run is cut from the pilot branch",
+      "state": "implementing",
+      "branch": "feat/landed-pr-closed-s2",
+      "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s2"
+    },
+    {
+      "slice": "S3 A gate1 shows the run's base",
+      "state": "planned"
+    },
+    {
+      "slice": "S4 The crew and docs say one line",
+      "state": "implementing",
+      "branch": "feat/landed-pr-closed-s4",
+      "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s4"
+    },
+    {
+      "slice": "S5 The gate stops failing on the green-tree reuse test",
+      "state": "implementing",
+      "branch": "feat/landed-pr-closed-s5",
+      "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s5"
+    }
+  ],
+  "next": "co-pilot: S1 integrating at 5257280; S2, S4, S5 implementing; S3 starts as a slot frees.",
+  "updatedAt": "2026-11-28T13:22:14.777Z",
+  "friction": [
+    {
+      "agent": "architect",
+      "what": "run bases stored per run, nothing reports their spread",
+      "evidence": "shell loop over 25+ run.json with git log dates to see the drift"
+    },
+    {
+      "agent": "architect",
+      "what": "question refused twice on post: body over 1200 chars, missing Research: line",
+      "evidence": "deck_post errors before itm_36e90cd58798"
+    },
+    {
+      "agent": "architect",
+      "what": "making a thread blocking meant close and re-post",
+      "evidence": "itm_36e90cd58798 re-posted as itm_0a129aaf2c8a"
+    },
+    {
+      "agent": "explorer",
+      "what": "gh prints a long 'gh event listen' hint on every pr view; --log-failed tags every line UNKNOWN STEP",
+      "evidence": "gh pr view 149 output; run 46137559499 log"
+    },
+    {
+      "kind": "drain",
+      "what": "3 question posts refused for missing Research: line, re-posted",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "parallel Bash/Agent calls given no classifier verdict, re-issued alone",
+      "size": 3
+    },
+    {
+      "agent": "architect",
+      "what": "deck_status refused rows named S1..S5 because full-title rows already existed",
+      "evidence": "\"S1 A main-cut run's landing merges its own PR and S1 are both S1\""
+    },
+    {
+      "kind": "drain",
+      "what": "deck notice labelled the Gate-1 feature-PR open as 'a landing ended short'",
+      "size": 2
+    },
+    {
+      "agent": "co-pilot",
+      "what": "handback-send-enforce hook forces a hand-back each time the co-pilot ends a turn to wait on live implementers",
+      "evidence": "2 early hand-backs with S1, S4, S5 still running; hook text: 'Your report has not been delivered. Call SubagentHandback(...) now; the call ends your run.'"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "land test files fail run alone until PILOT_BRANCH=pilot is set by hand; only scripts/gate.mjs:162 sets it",
+      "evidence": "S1 first red: NOT landed: no pilot branch name x3"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "fakeGh pr edit leaves base unchanged, so a merged poll after retarget cannot be shown",
+      "evidence": "S1 wrote movingGh wrapper in land-feature-line.test.mjs"
+    },
+    {
+      "kind": "drain",
+      "what": "handback-send-enforce forced 3 co-pilot hand-backs on interim child notices",
+      "size": 3
+    }
+  ]
+}
