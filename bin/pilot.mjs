@@ -125,10 +125,10 @@ const usage = () => `pilot — the deck for piloted runs
                  it; prints <pilot branch> already has main@<sha7> and pushes nothing when the merge
                  would change no file; exit 1 red or failed, 3 a conflict
   pilot land
-                 in the feat/<slug> worktree: push the feature, merge only it into your pilot branch
+                 in the feat/<slug> worktree: push the feature, move its own PR onto your pilot branch
+                 (retarget #<n> to <pilot branch>), merge only it into your pilot branch
                  in a temporary worktree (no sync), run the full suite (the only full run), push it (merged again once if it moved),
-                 and print the feature PR last, feature PR: #<n> into <base> or why not (a run based
-                 on the pilot branch keeps its PR from it to main); exit 3 a conflict
+                 and print the release PR last, main gets pilot: #<n> or why not; exit 3 a conflict
   pilot restack
                  after a feature PR merges, or by hand: retarget each open feat/ PR whose lower feature merged,
                  merge a lower branch or a clashing default branch into it, push never forced; one line per PR;

@@ -1,7 +1,4 @@
 /**
- * The legacy path (audit-f14 A3): only a run whose record base is `pilot` reaches it, until none is
- * in flight; a main-cut run's landing ends on its own feature PR (`featureLine`) instead.
- *
  * The release PR: the one open PR `pilot → main`, labelled `release`, which the user merges
  * (pilot-develop-line spec 1; L3, L4, A4; one-integration-line A1, A6). Every landing rewrites
  * its title and body whole from git: one row per first-parent `Merge feat/<slug> into pilot` in

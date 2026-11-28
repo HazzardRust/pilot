@@ -71,7 +71,7 @@ test('the PR carries the number; the landed lines say feat moved on origin', (t)
   assert.equal(under, git(x, 'rev-parse', 'HEAD'), 'one commit on top of the landed tip');
 
   assert.equal(said.code, 0, said.out);
-  assert.match(said.out, /\nADR NNNN-x is 0193\nfeat\/x moved on origin: git pull --ff-only before a fix\nfeature PR: #12 into main\n$/);
+  assert.match(said.out, /\nADR NNNN-x is 0193\nfeat\/x moved on origin: git pull --ff-only before a fix\nmain gets pilot: #900 \(opened\)\n$/);
 });
 
 /** One landing of `work`'s feature by hand: merge onto pilot, allocate on the feature, merge that, move pilot. */
