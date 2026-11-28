@@ -32,13 +32,14 @@ const commit = (cwd, message) => {
  * A repository on `feat/demo` with three commits (pilot, the feat tip's parent, the tip) whose test command
  * appends its argv to a count file: `{ cwd, home, pilot, parent, runs }`, `runs()` the argv of each run so far.
  */
-function feature(t) {
+function feature(t, { cargo = false } = {}) {
   const cwd = tmp(t, 'repo');
   const count = path.join(tmp(t, 'count'), 'runs.txt');
   const suite = path.join(path.dirname(count), 'suite.cjs');
   fs.writeFileSync(suite, `require('fs').appendFileSync(${JSON.stringify(count)}, JSON.stringify(process.argv.slice(2)) + '\\n');\n`);
   git(cwd, 'init', '-q', '-b', 'feat/demo');
-  fs.writeFileSync(path.join(cwd, 'package.json'), `${JSON.stringify({ scripts: { test: `node "${suite}"`, 'test:changed': `node "${suite}"` } })}\n`);
+  const scripts = { test: `node "${suite}"`, 'test:changed': `node "${suite}"`, ...(cargo ? { 'test:cargo': `node "${suite}" cargo` } : {}) };
+  fs.writeFileSync(path.join(cwd, 'package.json'), `${JSON.stringify({ scripts })}\n`);
   fs.writeFileSync(path.join(cwd, 'a.txt'), 'a\n');
   const pilot = commit(cwd, 'pilot');
   fs.writeFileSync(path.join(cwd, 'b.txt'), 'b\n');
@@ -103,6 +104,29 @@ test('an integrate row does not stand for QA', (t) => {
   }, { home: repo.home });
   assert.equal(qa(repo, hostOf(repo.cwd, []), []), 0);
   assert.deepEqual(repo.runs(), [[`--since=${repo.pilot}`]], 'a row since the parent is not one since pilot');
+});
+
+/** A green row for `repo`'s tree since pilot, of QA's own selection, whose gate deferred cargo (S2's F1). */
+const cargoSkipped = (repo) => recordRun({
+  at: new Date().toISOString(), where: 'implementer', branch: 'feat/demo', sha: git(repo.cwd, 'rev-parse', 'HEAD'), tree: worktreeTree(repo.cwd),
+  since: repo.pilot, scope: null, command: `npm run test:changed -- --since=${repo.pilot}`, cargo: 'skipped', exit: 0, minutes: 0.01,
+  platform: process.platform, node: Number(process.versions.node.split('.')[0]),
+}, { home: repo.home });
+
+test('QA over a row that skipped cargo runs cargo once and the selection never', (t) => {
+  const repo = feature(t, { cargo: true });
+  cargoSkipped(repo);
+  const out = [];
+  assert.equal(qa(repo, hostOf(repo.cwd, []), out), 0);
+  assert.deepEqual(repo.runs(), [['cargo']], 'cargo alone, once');
+  assert.match(out.at(-1), /^tests reused: implementer [0-9a-f]{7}; cargo /);
+});
+
+test('QA does not reuse a row that skipped cargo where there is no test:cargo', (t) => {
+  const repo = feature(t);
+  cargoSkipped(repo);
+  assert.equal(qa(repo, hostOf(repo.cwd, []), []), 0);
+  assert.deepEqual(repo.runs(), [[`--since=${repo.pilot}`]], 'no cargo-only command: the selection runs');
 });
 
 test('inside the suite with no home, no ledger is read', (t) => {

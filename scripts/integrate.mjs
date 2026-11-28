@@ -283,7 +283,7 @@ function provenRun(cwd, test, since, home) {
 }
 
 /** The repository's cargo-only command, `npm run test:cargo`, or undefined where package.json has no such script. */
-const cargoCommand = (cwd) => (hasPackage(cwd) && typeof packageScripts(cwd)['test:cargo'] === 'string' ? 'npm run test:cargo' : undefined);
+export const cargoCommand = (cwd) => (hasPackage(cwd) && typeof packageScripts(cwd)['test:cargo'] === 'string' ? 'npm run test:cargo' : undefined);
 
 /** A green run's `<counts>`, then `; <scope>` when it printed one. */
 const summaryOf = (run) => `${run.counts ?? `exit ${run.status}`}${run.scope ? `; ${run.scope}` : ''}`;
