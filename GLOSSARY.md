@@ -111,7 +111,7 @@ One line of the user's test ledger, written once a test process has exited, with
 _Avoid_: Test cache, test result, run record
 
 **Slice scope**:
-The narrower test run of an implementer's phase gate: what the selection would widen to the whole suite, and the cargo step, are deferred to integrate and named in the scope line, so a slice-scope row proves the slice and never the merge.
+The narrower test run of an implementer's phase gate: what the selection would widen to the whole suite is deferred to integrate and named in the scope line, and the cargo step to CI and land, so a slice-scope row proves the slice and never the merge.
 _Avoid_: Partial run, quick test, fast gate
 
 **Gate 1**:

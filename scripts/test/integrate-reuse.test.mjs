@@ -31,7 +31,7 @@ const COUNT = [
   '',
 ].join('\n');
 
-const PACKAGE = `${JSON.stringify({ name: 's2', private: true, scripts: { test: 'node count.mjs full', 'test:changed': 'node count.mjs changed', 'test:cargo': 'node count.mjs cargo' } }, null, 2)}\n`;
+const PACKAGE = `${JSON.stringify({ name: 's2', private: true, scripts: { test: 'node count.mjs full', 'test:changed': 'node count.mjs changed' } }, null, 2)}\n`;
 
 function commitFile(work, file, text, message) {
   fs.writeFileSync(path.join(work, file), text);
@@ -174,23 +174,21 @@ test('a slice-scope run reuses a deferred slice row; integrate does not', (t) =>
   assert.equal(s.runs(), 1, 'integrate runs the tests a deferred row left out');
 });
 
-// F1 of S2's review: a row that skipped cargo proves the node selection only.
-test('integrate over a reused row that skipped cargo starts cargo once', (t) => {
+// F1 of the principles review (L4, assumed on itm_8edab381da91): cargo runs at CI and at land, never at integrate.
+test('integrate over a reused row that skipped cargo starts no test process', (t) => {
   const s = setup(t);
   assert.equal(gate(s).status, 0);
   const [green] = ledgerRows(s.home);
-  fs.rmSync(path.join(s.home, '.claude', 'pilot', 'tests', 'ledger.jsonl'));
-  recordRun({ ...green, cargo: 'skipped' }, { home: s.home });
+  const home = homeWith(t, { ...green, cargo: 'skipped' });
   s.reset();
 
-  const result = integrate('slice/a', { cwd: s.work, home: s.home, ...quiet });
+  const result = integrate('slice/a', { cwd: s.work, home, ...quiet });
 
   assert.equal(result.ok, true, result.line);
-  assert.deepEqual(s.started(), ['cargo'], 'cargo once, the node selection never');
-  assert.match(result.line, /tests reused: implementer [0-9a-f]{7}; cargo /);
-  // A cargo-only run proves no node test: its row never stands for the tree.
-  s.reset();
-  assert.equal(testCli(['--as', 'qa'], { cwd: s.work, home: s.home, print: () => {} }), 0);
+  assert.deepEqual(s.started(), [], 'no node selection, no cargo');
+  assert.match(result.line, /tests reused: implementer [0-9a-f]{7}; pushed/);
+  // QA still needs cargo: the same row never stands for its run.
+  assert.equal(testCli(['--as', 'qa'], { cwd: s.work, home, print: () => {} }), 0);
   assert.deepEqual(s.started(), ['full']);
 });
 

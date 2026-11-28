@@ -32,13 +32,13 @@ const commit = (cwd, message) => {
  * A repository on `feat/demo` with three commits (pilot, the feat tip's parent, the tip) whose test command
  * appends its argv to a count file: `{ cwd, home, pilot, parent, runs }`, `runs()` the argv of each run so far.
  */
-function feature(t, { cargo = false } = {}) {
+function feature(t) {
   const cwd = tmp(t, 'repo');
   const count = path.join(tmp(t, 'count'), 'runs.txt');
   const suite = path.join(path.dirname(count), 'suite.cjs');
   fs.writeFileSync(suite, `require('fs').appendFileSync(${JSON.stringify(count)}, JSON.stringify(process.argv.slice(2)) + '\\n');\n`);
   git(cwd, 'init', '-q', '-b', 'feat/demo');
-  const scripts = { test: `node "${suite}"`, 'test:changed': `node "${suite}"`, ...(cargo ? { 'test:cargo': `node "${suite}" cargo` } : {}) };
+  const scripts = { test: `node "${suite}"`, 'test:changed': `node "${suite}"` };
   fs.writeFileSync(path.join(cwd, 'package.json'), `${JSON.stringify({ scripts })}\n`);
   fs.writeFileSync(path.join(cwd, 'a.txt'), 'a\n');
   const pilot = commit(cwd, 'pilot');
@@ -112,13 +112,11 @@ const cargoSkipped = (repo) => recordRun({
   since: repo.pilot, scope: null, command: `npm run test:changed -- --since=${repo.pilot}`, cargo: 'skipped', exit: 0, minutes: 0.01,
 }, { home: repo.home });
 
-test('QA does not reuse a row that skipped cargo, test:cargo or none', (t) => {
-  for (const cargo of [true, false]) {
-    const repo = feature(t, { cargo });
-    cargoSkipped(repo);
-    assert.equal(qa(repo, hostOf(repo.cwd, []), []), 0);
-    assert.deepEqual(repo.runs(), [[`--since=${repo.pilot}`]], `test:cargo ${cargo}: the selection runs, cargo alone never`);
-  }
+test('QA does not reuse a row that skipped cargo', (t) => {
+  const repo = feature(t);
+  cargoSkipped(repo);
+  assert.equal(qa(repo, hostOf(repo.cwd, []), []), 0);
+  assert.deepEqual(repo.runs(), [[`--since=${repo.pilot}`]], 'the selection runs');
 });
 
 test('inside the suite with no home, no ledger is read', (t) => {

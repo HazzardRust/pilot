@@ -288,8 +288,8 @@ export function scopeLine(selection) {
   return `selected ${selection.files.length} of ${selection.total} test files since ${selection.since.slice(0, 7)}${deferred}`;
 }
 
-/** The line a slice-scope gate prints for the cargo step it deferred to integrate (tested-once spec 3). */
-export const CARGO_DEFERRED = 'rune deck: deferred to integrate';
+/** The line a slice-scope gate prints for the cargo step it deferred to CI and land (tested-once spec 3; L4). */
+export const CARGO_DEFERRED = 'rune deck: deferred to CI and land';
 
 /** The last scope line in a gate's `output`, or null when it printed none. */
 export function scopeOf(output) {

@@ -173,7 +173,7 @@ const noneRecorded = (cause) => {
 
 /**
  * The record's test runs in one line (tested-once spec 4): `test runs: <n> local, <m> min (<where> <k>, ...)`,
- * the places most runs first; none when the record holds no rows.
+ * the places most runs first, after a blank line so it never reads as a slice; none when the record holds no rows.
  */
 function testRunsLine(tests) {
   if (!Array.isArray(tests) || tests.length === 0) return [];
@@ -181,7 +181,7 @@ function testRunsLine(tests) {
   for (const where of tests.map((row) => String(row?.where ?? 'unknown'))) counts.set(where, (counts.get(where) ?? 0) + 1);
   const minutes = tests.reduce((sum, row) => sum + (Number.isFinite(row?.minutes) ? row.minutes : 0), 0);
   const places = [...counts].sort(([, a], [, b]) => b - a).map(([where, k]) => `${said(where)} ${k}`);
-  return [`test runs: ${tests.length} local, ${Math.round(minutes * 10) / 10} min (${places.join(', ')})`];
+  return ['', `test runs: ${tests.length} local, ${Math.round(minutes * 10) / 10} min (${places.join(', ')})`];
 }
 
 /**

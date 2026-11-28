@@ -18,7 +18,6 @@
   "scripts": {
     "test": "node scripts/gate.mjs",
     "test:changed": "node scripts/gate.mjs",
-    "test:cargo": "node scripts/gate.mjs --cargo-only",
     "test:cost": "node scripts/gate.mjs --cost",
     "test:quiet": "node scripts/gate.mjs --test-reporter=./scripts/quiet-reporter.mjs",
     "adr-index": "node scripts/adr-index.mjs",

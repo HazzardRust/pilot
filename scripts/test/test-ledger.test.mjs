@@ -74,12 +74,12 @@ test('a red row is never reused', (t) => {
   assert.equal(reusableRun({ tree, since: null, home, command: CMD }), null);
   recordRun(row({ sha, tree }, { exit: '3' }), { home });
   assert.equal(reusableRun({ tree, since: null, home, command: CMD }), null);
-  // A row that skipped cargo is complete only to an asker that runs cargo itself, or to a slice-scope run.
+  // A row that skipped cargo is complete only to integrate, which runs no cargo, or to a slice-scope run.
   recordRun(row({ sha, tree }, { cargo: 'skipped' }), { home });
   assert.equal(reusableRun({ tree, since: null, home, command: CMD }), null);
-  assert.equal(reusableRun({ tree, since: null, home, command: CMD, runsCargo: true })?.cargo, 'skipped');
+  assert.equal(reusableRun({ tree, since: null, home, command: CMD, scope: 'integrate' })?.cargo, 'skipped');
   assert.equal(reusableRun({ tree, since: null, home, command: CMD, scope: 'slice' })?.cargo, 'skipped');
-  assert.equal(reusableRun({ tree, since: null, home, command: 'npm run other', runsCargo: true }), null);
+  assert.equal(reusableRun({ tree, since: null, home, command: 'npm run other', scope: 'integrate' }), null);
   assert.equal(reusableRun({ tree, since: null, home }), null, 'no command asked, none reused');
   recordRun(row({ sha, tree }), { home });
   assert.equal(reusableRun({ tree, since: null, home, command: CMD })?.exit, 0);

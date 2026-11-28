@@ -277,13 +277,8 @@ function provenRun(cwd, test, since, home) {
   const ledger = ledgerHome(home);
   if (test !== undefined || ledger === null) return { row: null, tree: undefined };
   const tree = worktreeTree(cwd);
-  const row = reusableRun({ tree, since, home: ledger, command: testCommand(cwd, { since })?.command, runsCargo: true });
-  // A row that skipped cargo stands only where integrate can run cargo alone (S2's F1).
-  return { row: row?.cargo === 'skipped' && cargoCommand(cwd) === undefined ? null : row, tree };
+  return { row: reusableRun({ tree, since, home: ledger, scope: 'integrate', command: testCommand(cwd, { since })?.command }), tree };
 }
-
-/** The repository's cargo-only command, `npm run test:cargo`, or undefined where package.json has no such script. */
-export const cargoCommand = (cwd) => (hasPackage(cwd) && typeof packageScripts(cwd)['test:cargo'] === 'string' ? 'npm run test:cargo' : undefined);
 
 /** A green run's `<counts>`, then `; <scope>` when it printed one. */
 const summaryOf = (run) => `${run.counts ?? `exit ${run.status}`}${run.scope ? `; ${run.scope}` : ''}`;
@@ -567,18 +562,18 @@ export function integrate(branch, options = {}) {
   try {
     const proven = provenRun(cwd, test, start, home);
     reused = proven.row;
-    if (!reused) run = runChosen(cwd, test, start, merged, home, proven.tree);
-    // The node selection is proved; the cargo step it skipped runs here. Its row's since names no request, so it is never reused.
-    else if (reused.cargo === 'skipped') run = runTests(cwd, cargoCommand(cwd), { label: merged, where: 'integrate', since: 'cargo', home });
-    if (run) view.forget(); // the test command is git's to touch too, outside the view (L3)
+    if (!reused) {
+      run = runChosen(cwd, test, start, merged, home, proven.tree);
+      view.forget(); // the test command is git's to touch too, outside the view (L3)
+    }
   } catch (err) {
     // The log could not be written, or the ledger not read: the merge in hand is undone, as on red.
     return fail(`${not}: the tests could not run (${firstLine(err)}); not pushed`);
   }
   if (run && run.status !== 0) {
-    return fail(`${not}: ${redLine(reused ? `${merged} cargo` : merged, run)}; not pushed`, run.failing);
+    return fail(`${not}: ${redLine(merged, run)}; not pushed`, run.failing);
   }
-  const counts = reused ? `tests reused: ${reused.where} ${String(reused.sha ?? reused.tree).slice(0, 7)}${run ? `; cargo ${summaryOf(run)}` : ''}` : summaryOf(run);
+  const counts = reused ? `tests reused: ${reused.where} ${String(reused.sha ?? reused.tree).slice(0, 7)}` : summaryOf(run);
 
   try {
     if (slice) commit(view, subject, trailers);

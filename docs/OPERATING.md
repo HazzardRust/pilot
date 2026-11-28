@@ -60,7 +60,7 @@ A ticket whose signed plan has 2 slices or fewer takes the **short path**: the p
 
 | Step | Runs |
 | --- | --- |
-| a slice's phase gate | the selection at slice scope (`PILOT_TEST_SCOPE=slice`): a trigger file, a script no test reaches or an overlong selection runs the matched files and the whole-tree tests, cargo does not run (its row says `cargo: skipped`, so integrate runs `npm run test:cargo`), and the scope line ends `; deferred: <reason>, ...` |
+| a slice's phase gate | the selection at slice scope (`PILOT_TEST_SCOPE=slice`): a trigger file, a script no test reaches or an overlong selection runs the matched files and the whole-tree tests, cargo does not run (its row says `cargo: skipped`; integrate takes that row and runs no cargo, which runs at CI and at land), and the scope line ends `; deferred: <reason>, ...` |
 | the fix round, QA, the lander's resolution | the selection (`npm run test:changed`), wide |
 | `pilot integrate` (the slice, the base, a resumed merge) | the selection since the start of the merge, wide: what the phase gate deferred runs here |
 | `pilot sync` | the selection, wide |

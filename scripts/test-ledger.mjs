@@ -106,14 +106,14 @@ const deferred = (scope) => typeof scope === 'string' && /\bdeferred\b/.test(sco
  * The latest green row of exactly `command` for exactly `tree` on this platform and node, since `since`
  * or full; else null. A row that deferred part of its run matches only an asking `scope` of `slice`,
  * since only a slice-scope run defers; integrate and QA need a complete row (L4, amended by
- * itm_ce0954d114aa). A row whose `cargo` was `skipped` matches a `slice` scope too, or an asker that
- * `runsCargo` itself (integrate); never a row whose `cargo` is not null otherwise.
+ * itm_ce0954d114aa). A row whose `cargo` was `skipped` matches a `slice` scope too, or `integrate`, which
+ * runs no cargo (cargo runs at CI and at land; L4, assumed on itm_8edab381da91); never a non-null `cargo` otherwise.
  */
-export function reusableRun({ tree, since = null, home, scope = null, command, runsCargo = false }) {
+export function reusableRun({ tree, since = null, home, scope = null, command }) {
   if (typeof tree !== 'string' || !tree || typeof command !== 'string' || !command) return null;
   const fits = (row) =>
     row.exit === 0 && row.tree === tree && row.command === command && (scope === 'slice' || !deferred(row.scope)) &&
-    (scope === 'slice' || row.cargo === null || (runsCargo && row.cargo === 'skipped')) && (row.since === null || row.since === since) &&
+    (scope === 'slice' || row.cargo === null || (scope === 'integrate' && row.cargo === 'skipped')) && (row.since === null || row.since === since) &&
     row.platform === hostPlatform() && row.node === nodeMajor();
   return rowsIn(home).filter(fits).at(-1) ?? null;
 }

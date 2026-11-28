@@ -1,6 +1,6 @@
 /**
  * tested-once S3 (spec 3; A2, A5): at slice scope (`scope: 'slice'`, env `PILOT_TEST_SCOPE=slice` in the gate)
- * the selection's whole-tree fallbacks and the cargo step are deferred to integrate and named in the scope line;
+ * the selection's whole-tree fallbacks are deferred to integrate and named in the scope line, the cargo step to CI and land;
  * the default, wide, scope keeps today's full runs.
  */
 
@@ -97,7 +97,7 @@ test('cargo waits for integrate', () => {
   const asked = [];
   const which = (cmd) => (asked.push(cmd), CARGO);
   assert.deepEqual(cargoStep({ ...LOCAL, PILOT_TEST_SCOPE: 'slice' }, which, 'win32', selected(['deck/view.mjs'])), {
-    skip: 'rune deck: deferred to integrate',
+    skip: 'rune deck: deferred to CI and land',
   });
   assert.deepEqual(asked, [], 'cargo is not even looked up');
   assert.equal(cargoStep({ ...LOCAL, PILOT_TEST_SCOPE: 'wide' }, which, 'win32', selected(['deck/view.mjs'])).steps.length, 2, 'wide runs it');
@@ -153,14 +153,14 @@ test('a slice-scope gate with only cargo deferred has a complete scope line', (t
   assert.equal(code, 0);
   assert.equal(asked[0].scope, 'slice');
   assert.equal(scopeOf(text), 'selected 1 of 9 test files since 0123456');
-  assert.ok(text.includes('rune deck: deferred to integrate\n'), text);
+  assert.ok(text.includes('rune deck: deferred to CI and land\n'), text);
   assert.ok(!calls.includes(CARGO), 'cargo never starts');
 });
 
 test('a slice-scope gate with a lonely file still says deferred', (t) => {
   const { text, calls } = sliceGate(t, { ...selected(['deck/view.mjs']), deferred: ['lib/lonely.mjs reaches no test'] });
   assert.equal(scopeOf(text), 'selected 1 of 9 test files since 0123456; deferred: lib/lonely.mjs reaches no test');
-  assert.ok(text.includes('rune deck: deferred to integrate\n'), text);
+  assert.ok(text.includes('rune deck: deferred to CI and land\n'), text);
   assert.ok(!calls.includes(CARGO), 'cargo never starts');
 });
 

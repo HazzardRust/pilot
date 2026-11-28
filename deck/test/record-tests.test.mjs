@@ -69,7 +69,8 @@ test('the closing report totals them', (t) => {
 
   const { body } = closingReportOf(statusFor('x'), GATE, []);
 
-  assert.ok(body.split('\n').includes('test runs: 3 local, 9.5 min (implementer 2, integrate 1)'), body);
+  // A blank line parts it from the Slices list, so it never reads as a slice.
+  assert.match(body, /\n- [^\n]+\n\ntest runs: 3 local, 9\.5 min \(implementer 2, integrate 1\)\n\n/);
 });
 
 test('a record with no tests says nothing', (t) => {

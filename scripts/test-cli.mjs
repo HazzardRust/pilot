@@ -75,7 +75,7 @@ export function testCli(argv, { cwd = process.cwd(), home, host, print = console
   }
   const tree = worktreeTree(cwd);
   const ledger = ledgerHome(home);
-  // Only integrate runs cargo alone, so only it takes a row that skipped cargo (L4); a slice scope takes any.
+  // Only integrate, which runs no cargo, takes a row that skipped cargo (L4); a slice scope takes any.
   const reused = ledger === null ? null : reusableRun({ tree, since: since ?? null, home: ledger, scope: opts.scope, command: chosen.command });
   if (reused) {
     print(`tests reused: ${reused.where} ${String(reused.sha ?? reused.tree).slice(0, 7)}`);
