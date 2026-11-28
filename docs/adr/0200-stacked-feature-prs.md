@@ -1,9 +1,9 @@
 ---
-status: proposed
+status: superseded
 date: 2026-11-20
 tags: [git, landing, chain, pr, agents]
 supersedes: [0167]
-superseded_by: []
+superseded_by: [NNNN]
 paths: [scripts/stack.mjs, scripts/base.mjs, scripts/integrate.mjs, scripts/feature-pr.mjs, scripts/land.mjs, scripts/adr-allocate.mjs, scripts/pilot-branch.mjs, deck/lineage.mjs, deck/closing-report.mjs, deck/host.mjs, agents/pilot.md, agents/pilot-lander.md, docs/OPERATING.md, docs/design/audit-f14/architecture.md]
 ---
 # Each feature is its own PR to main

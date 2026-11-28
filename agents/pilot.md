@@ -179,9 +179,10 @@ within `pilot budget`.
 
 ## The shape of a run
 
-Every run is cut from what `pilot base` prints and lands on your pilot branch, `<login>-pilot`. One feature
+Every run is cut from and lands on your pilot branch, `<login>-pilot`; main gets features
+only through the release PR, merged by the user. One feature
 is one integration branch, `feat/<slug>`, and one **feature PR** from it to
-main or the lower `feat/<N>`, merged by the user. Every slice is a pushed branch, reviewed by its
+the pilot branch, merged by the landing push. Every slice is a pushed branch, reviewed by its
 own fresh language reviewer and merged into `feat/<slug>` by the pilot; no
 PR ever targets `feat/<slug>`. QA and the feature's one
 principles review both happen once, on the whole feature, when the last
@@ -624,7 +625,7 @@ in the pilot.
 Each human step a crew report names or you find goes in `deck_status`'s `step` as it arises, one line, never a
 secret's value: environment variables, anything needing a permission the pilot lacked, a rejected feature's
 revert landed by the same press, branch protection on the default branch. A step found after the report has no way
-in. The deck puts them in the ticket's steps thread beside land's feature PR step, bottom first (a legacy run's main PR);
+in. The deck puts them in the ticket's steps thread beside land's release PR step;
 that thread is the user's, closed by their Done, never by you.
 
 The closing report is a `report` item naming its `ticket`, which the lander posts on `landed`, closing
