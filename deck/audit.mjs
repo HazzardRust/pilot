@@ -250,8 +250,26 @@ const nameOf = (key) => {
   return `${readable}-${crypto.createHash('sha256').update(key).digest('hex').slice(0, 10)}`;
 };
 
+/**
+ * An existing path of this host's flavour as its realpath, anything else as given. The folder is a repository's
+ * identity, so a link and its target are one folder: on macOS a session's cwd is /var/... while process.cwd()
+ * is /private/var/..., and encodePath keeps a link's spelling (store-codec `caseOnly`).
+ */
+const identity = (p) => {
+  if (path.resolve(p) !== path.normalize(p)) return p; // another flavour (a fixture) or not absolute: as given
+  // A missing path takes its deepest existing ancestor's realpath, so its name does not move once it is made.
+  for (let dir = p, rest = []; ; rest.unshift(path.basename(dir)), dir = path.dirname(dir)) {
+    try {
+      return path.join(fs.realpathSync.native(dir), ...rest);
+    } catch (error) {
+      if (!['ENOENT', 'ENOTDIR'].includes(error.code) || path.dirname(dir) === dir) return p;
+    }
+  }
+};
+
 /** A repository's audit folder name, from its stored path (portable-store S3), so it is one name on every machine. */
-export const directoryFor = (repo, roots = defaultRoots(os.homedir(), hostPlatform())) => nameOf(encodePath(repo, roots));
+export const directoryFor = (repo, roots = defaultRoots(os.homedir(), hostPlatform())) =>
+  nameOf(encodePath(identity(repo), Object.fromEntries(Object.entries(roots).map(([name, dir]) => [name, identity(dir)]))));
 
 const TOLD = new Set();
 
