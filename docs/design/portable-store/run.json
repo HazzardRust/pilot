@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed c7a81f6 (fixed on the native-spelling tree, ts approve); integrating",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -33,7 +33,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed cab49a0 (fixed on the native-spelling tree, ts approve)",
+      "state": "pushed cab49a0; integrating on 3da56c1 (checks green)",
       "after": [
         "S2"
       ],
@@ -51,7 +51,7 @@
     },
     {
       "slice": "S6",
-      "state": "implementing",
+      "state": "pushed 239e540 (ts approve, round 3)",
       "after": [
         "S5"
       ],
@@ -60,7 +60,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed dad0f44",
+      "state": "pushed 9c724d8 (on fixed tree; ts approve)",
       "after": [
         "S4"
       ],
@@ -121,37 +121,9 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-fix-portable-store-s3-mac"
     }
   ],
-  "next": "co-pilot: integrating S2 c7a81f6 on 4364c19; then S4 cab49a0, S7 dad0f44 (needs archive-page pin for exported-noticed.json), S5 411305d, S6; fundamentalist; QA.",
-  "updatedAt": "2026-11-28T07:26:20.619Z",
+  "next": "co-pilot: integrating S4 cab49a0 on 3da56c1; then S7 9c724d8, S5 411305d, S6 239e540; fundamentalist; QA.",
+  "updatedAt": "2026-11-28T08:07:40.891Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "two commit trailers in play: the co-pilot's brief gave one model and session, the feature brief.md another",
-      "evidence": "S1 report decision 6",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "test:changed ran the full suite again (selection 31426 chars over 24000) for a two-file slice, ~15 min, backgrounded twice by the shell timeout",
-      "evidence": "S3 report GATE",
-      "size": 15
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "slice Evidence lines naming 'the real copy' need an A7 permission round trip each; the slice file should name the scratch-copy method and its bounds",
-      "evidence": "S2 and S3 A7 questions to main",
-      "size": 2
-    },
-    {
-      "kind": "drain",
-      "what": "S1 gated on Windows only passed locally (5081/0) and broke 243 tests on macOS, 221 on ubuntu and 22 on Windows CI; integrate's local gate cannot see a posix break, found only after merge to feat",
-      "size": 20
-    },
-    {
-      "kind": "drain",
-      "what": "third and fourth co-pilot forced to hand back with a child live; pilot integrates and triages CI itself",
-      "size": 15
-    },
     {
       "kind": "drain",
       "what": "pilot integrate refuses every branch while the feature tip is red in CI, including the branch that fixes it; auto mode refused the fast-forward push as a way round: a red tip can only be fixed by the user's own push",
@@ -337,6 +309,36 @@
       "agent": "pilot:pilot-co-pilot",
       "what": "pilot integrate refuses a fix branch for the very red it fixes (red feature tip takes no slice); the fix has to go onto feat by hand as a fast-forward",
       "evidence": "NOT integrated fix/portable-store-s3-mac: checks red at 66a8b29: gate (macos-latest); fix the feature first",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Edit/Write turn \\uXXXX escapes into literal characters; a literal U+2028 in a regex literal broke parsing",
+      "evidence": "SyntaxError: Invalid regular expression in store-gone.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "importing deck/testUtils.mjs from a seed script silently moves HOME and drops PILOT_DECK_DIR",
+      "evidence": "S6 B3 first seed wrote to the suite temp home",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "scripts/test/worktrees.test.mjs red on any machine without gh auth or git config pilot.branch",
+      "evidence": "'no pilot branch name: run gh auth login' on feat in a throwaway worktree",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "NEVER_SHOWN pinned in two tests (archive-coverage, archive-page): each new store file costs two edits",
+      "evidence": "S2/S4 fixer",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed log ends with no summary line and the run did not exit on its own; completion inferred from the log going quiet",
+      "evidence": "S7 merge fix gate, 5258 passing lines, no final ℹ summary",
       "size": 1
     }
   ]
