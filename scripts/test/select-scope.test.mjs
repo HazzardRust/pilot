@@ -101,7 +101,8 @@ test('the scope line says what was deferred', () => {
   assert.equal(scopeLine({ files: ['a'], total: 4, since: 'abc1234def' }), 'selected 1 of 4 test files since abc1234', 'nothing deferred, nothing added');
 });
 
-test('the gate passes slice scope to the selection and defers cargo in its scope line', (t) => {
+/** Runs the gate at slice scope over a stubbed selection; returns what it asked, wrote and spawned. */
+const sliceGate = (t, selection) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-select-scope-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const store = path.join(dir, 'deck.json');
@@ -121,7 +122,7 @@ test('the gate passes slice scope to the selection and defers cargo in its scope
     code = runGate(['--since=main'], {
       cwd: dir,
       slot: () => ({ slot: 1, release() {} }),
-      select: (opts) => (asked.push(opts), selected(['deck/view.mjs'])),
+      select: (opts) => (asked.push(opts), selection),
       read: () => [],
       spawn: (command, args) => (calls.push(command), { status: 0 }),
       homeStore: store,
@@ -134,10 +135,21 @@ test('the gate passes slice scope to the selection and defers cargo in its scope
   } finally {
     out.mock.restore();
   }
+  return { code, asked, calls, text: written.join('') };
+};
+
+test('a slice-scope gate with only cargo deferred has a complete scope line', (t) => {
+  const { code, asked, calls, text } = sliceGate(t, selected(['deck/view.mjs']));
   assert.equal(code, 0);
   assert.equal(asked[0].scope, 'slice');
-  const text = written.join('');
-  assert.equal(scopeOf(text), 'selected 1 of 9 test files since 0123456; deferred: cargo');
+  assert.equal(scopeOf(text), 'selected 1 of 9 test files since 0123456');
+  assert.ok(text.includes('rune deck: deferred to integrate\n'), text);
+  assert.ok(!calls.includes(CARGO), 'cargo never starts');
+});
+
+test('a slice-scope gate with a lonely file still says deferred', (t) => {
+  const { text, calls } = sliceGate(t, { ...selected(['deck/view.mjs']), deferred: ['lib/lonely.mjs reaches no test'] });
+  assert.equal(scopeOf(text), 'selected 1 of 9 test files since 0123456; deferred: lib/lonely.mjs reaches no test');
   assert.ok(text.includes('rune deck: deferred to integrate\n'), text);
   assert.ok(!calls.includes(CARGO), 'cargo never starts');
 });
