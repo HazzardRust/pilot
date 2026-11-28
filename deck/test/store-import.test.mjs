@@ -71,7 +71,17 @@ function anImport(argv, home, more = {}) {
   return { code, said: said.join('\n') };
 }
 
-const under = (home) => (value) => pathKey(value).startsWith(pathKey(home) + path.sep);
+/** `pathKey` of the deepest existing ancestor of `value`, then the rest: a missing leaf is keyed through the same link its parent is (macOS /var is /private/var). */
+const keyOf = (value) => {
+  const rest = [];
+  let head = path.resolve(value);
+  while (!fs.existsSync(head) && path.dirname(head) !== head) {
+    rest.unshift(path.basename(head));
+    head = path.dirname(head);
+  }
+  return path.join(pathKey(head), ...rest);
+};
+const under = (home) => (value) => keyOf(value).startsWith(keyOf(home) + path.sep);
 
 test('a bundle opens under another home', (t) => {
   const { file, queue, items } = aBundle(t);
