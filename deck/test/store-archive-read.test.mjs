@@ -22,7 +22,7 @@ const OLD = '2026-09-01T10:00:00.000Z';
 const old = {
   id: 'itm_archived',
   kind: 'chat',
-  repo: 'C:/repo',
+  repo: path.resolve('C:/repo'), // the native spelling the store reads back (portable-store L2)
   title: 'the archived thread',
   body: 'what was said',
   createdAt: '2026-08-30T00:00:00.000Z',
@@ -34,7 +34,7 @@ const old = {
 /** A deck on a port of its own whose store holds `old` in the archive and one live item. */
 async function archivedDeck(t) {
   const base = await deckOnAPort(t);
-  const deck = { version: 3, items: [old, { id: 'itm_live', kind: 'chat', repo: 'C:/repo', title: 'live', createdAt: OLD }], runs: [], seq: 9 };
+  const deck = { version: 4, items: [old, { id: 'itm_live', kind: 'chat', repo: old.repo, title: 'live', createdAt: OLD }], runs: [], seq: 9 };
   fs.writeFileSync(path.join(storeDir(), 'deck.json'), `${JSON.stringify(deck, null, 2)}\n`, 'utf8');
   archiveOld({ now: NOW });
   assert.deepEqual(archivedItem(old.id), old, 'the fixture archived the item');

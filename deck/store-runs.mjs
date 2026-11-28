@@ -472,7 +472,7 @@ export function registerRun({ repo, pid, session }) {
       run.session !== undefined &&
       existing.session === run.session &&
       existing.pid === run.pid &&
-      existing.repo === run.repo,
+      sameRepo(existing.repo, run.repo),
   );
   if (same) {
     same.lastSeenAt = run.lastSeenAt;
@@ -480,7 +480,7 @@ export function registerRun({ repo, pid, session }) {
   }
   const kept = runsOf(deck).filter(
     (existing) =>
-      (existing.pid !== run.pid || existing.repo !== run.repo) &&
+      (existing.pid !== run.pid || !sameRepo(existing.repo, run.repo)) &&
       (isLive(existing) ||
         waiting.some((repo) => sameRepo(repo, existing.repo))),
   );

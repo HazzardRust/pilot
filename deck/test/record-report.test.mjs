@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { tempDeck } from '../testUtils.mjs';
+import { storedDeck, tempDeck } from '../testUtils.mjs';
 
 const { recordFor, registerRun, storeFile } = await import('../store.mjs');
 const { callTool } = await import('../server.mjs');
@@ -31,7 +31,7 @@ const fullReport = () => ({
     { slice: 'S2', pr: 182, mergeSha: '0123456789abcdef0123456789abcdef01234567' },
   ],
   assumed: [{ id: 'A2', decision: 'past reports are not converted', taken: 'pilot, asked' }],
-  worktreesLeft: ['C:/work/pilot-s1'],
+  worktreesLeft: [path.resolve('C:/work/pilot-s1')], // the native spelling the store reads back (portable-store L2)
 });
 
 /** The report as the finished record holds it: what was sent, plus the derived friction of a record with no rows. */
@@ -60,7 +60,7 @@ test('a deck_status with report writes it into the store\'s record in RECORD_ORD
     'report sits between findings and next',
   );
   // The store's own bytes, read: the report is in the deck's store (L11).
-  const store = JSON.parse(fs.readFileSync(storeFile(), 'utf8'));
+  const store = storedDeck();
   assert.deepEqual(store.records.at(-1).record.report, stored());
 });
 

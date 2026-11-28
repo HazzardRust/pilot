@@ -16,3 +16,8 @@ Each change to `GLOSSARY.md`, one row per term added, changed or removed, with t
 | 2026-11-21 | project-glossary | changed | Vendored file |
 | 2026-11-28 | tested-once | added | Ledger row |
 | 2026-11-28 | tested-once | added | Slice scope |
+| 2026-11-28 | portable-store | added | Bundle |
+| 2026-11-28 | portable-store | added | Root |
+| 2026-11-28 | portable-store | added | Stored path |
+| 2026-11-28 | portable-store | added | Machine file |
+| 2026-11-28 | portable-store | added | Portable part |

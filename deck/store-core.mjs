@@ -7,10 +7,14 @@
 
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
+import { hostPlatform } from '../hooks/lib/platform.js';
 import { findCredential } from './credential.mjs';
+import { readMachine, rootsOf, storeMachine } from './machine.mjs';
+import { fromStored, upgradeV3 } from './store-codec.mjs';
 import { stampLegacyGrants } from './recut.mjs';
 import { refuseGateHomeWrite, storeDir } from './store-dir.mjs';
 import { isDeck, keepBackup, localDay, noteParsed, recoverStore } from './store-recovery.mjs';
@@ -46,7 +50,10 @@ import { tabFor, tabsOf } from './tabs.mjs';
 import { andList } from './tools.mjs';
 
 const STORE_FILENAME = 'deck.json';
-const STORE_VERSION = 3;
+const STORE_VERSION = 4;
+/** The last version that holds absolute paths: what `upgradeStore` ends at and `upgradeV3` takes (portable-store L6). */
+const ABSOLUTE_PATHS_VERSION = 3;
+const roots = (machine) => rootsOf(machine, os.homedir(), hostPlatform()); // derived each call, overrides stored (L3)
 
 /**
  * The most text the deck will take in one field, wherever it came from. It lives here
@@ -162,15 +169,20 @@ function readDeck(recovered = false) {
   if (Number.isInteger(deck?.version) && deck.version > STORE_VERSION) {
     throw unreadableStore(file, `is version ${deck.version}, and this deck reads version ${STORE_VERSION}`);
   }
-  if (!isDeck(deck) || ![1, 2, STORE_VERSION].includes(deck.version)) {
+  if (!isDeck(deck) || ![1, 2, 3, STORE_VERSION].includes(deck.version)) {
     return corrupt(`holds ${raw.slice(0, 80)}, which is not a deck`);
   }
   noteParsed(file, stat);
 
-  if (deck.version !== STORE_VERSION) {
-    backUp(file, raw, deck.version);
-    writeDeck(upgradeStore(deck));
+  const old = deck.version !== STORE_VERSION;
+  if (old) backUp(file, raw, deck.version);
+  const machine = readMachine(path.dirname(file));
+  try {
+    deck = fromStored(old ? upgradeV3(upgradeStore(deck), roots(machine)) : deck, machine, roots(machine));
+  } catch (err) {
+    throw unreadableStore(file, `holds a path this deck cannot read (${err.message})`); // refused, never recovered over
   }
+  if (old) writeDeck(deck);
   stampLegacyGrants(deck); // read-time; the next write keeps it (never-stuck QA-F1)
   deck.items = deck.items.map((item) => notLiveYellow(withoutEstimate(asUserThread(item))));
   // The sub-deck is gone (yellow-agent L10): a run 0.7.19 stored under a `parent` is not this deck's, live or
@@ -195,7 +207,7 @@ export function upgradeStore(deck) {
     const swap = { green: 'red', red: 'green' };
     deck.items = deck.items.map((item) => (item?.kind === KIND_TICKET && Object.hasOwn(swap, item.state) ? { ...item, state: swap[item.state] } : item));
   }
-  deck.version = STORE_VERSION;
+  deck.version = ABSOLUTE_PATHS_VERSION;
   return deck;
 }
 
@@ -230,7 +242,7 @@ function fromV2Spelling(deck) {
  */
 function backUp(file, raw, version) {
   const day = localDay();
-  const dir = path.dirname(file);
+  const dir = path.dirname(refuseGateHomeWrite(file));
   const tmp = path.join(dir, `deck.v${version}-${day}.${process.pid}.tmp`);
   let backup = path.join(dir, `deck.v${version}-${day}.json`);
   try {
@@ -306,7 +318,7 @@ function writeDeck(deck) {
   } catch (err) {
     console.error(`[deck] deck store ${file} is written without a fresh backup: ${err.message}`);
   }
-  atomicWriteFileSync(file, `${JSON.stringify(deck, null, 2)}\n`);
+  atomicWriteFileSync(file, `${JSON.stringify(storeMachine(dir, deck, os.homedir(), hostPlatform()), null, 2)}\n`);
 }
 
 /**

@@ -102,8 +102,8 @@ what the two devices share, and nothing else (ADR 0207):
 
 1. Git is the shared state: work moves between the devices only as pushed branches, your pilot branch and the PRs on the remote. Both devices sign in to
    the same account, so both derive the same `<login>-pilot` with nothing shared but git.
-2. Each device runs its own deck. Its tickets, threads and run records stay on that device; nothing syncs, exports or
-   commits them.
+2. Each device runs its own deck. Its tickets, threads and run records stay on that device; nothing syncs them, and
+   you move them only by hand (below).
 3. One device, the owner, holds the queue and lands on your pilot branch. Which one is your convention; no setting enforces it.
 4. The other device hands its work over as a pushed branch and a PR, never as deck data.
 
@@ -131,6 +131,27 @@ On device 2, in PowerShell on Windows or your login shell elsewhere:
 6. Check the device: `pilot doctor` in the clone shows no `fail` row. A `fail` row prints its fix below it; run that,
    then `pilot doctor` again.
 7. Start: `pilot start`. Leave the queue and the landings to the owner, and hand this device's work over as rule 4 says.
+
+### Moving the store to another device
+
+To carry the deck's tickets, threads, chats and run records to a new machine, export on the old one and import on the
+new one. Nothing syncs them (ADR 0230): a bundle moves only when you move it.
+
+1. On the old device: `pilot store export [<file>] [--logs]`. It writes one bundle of the portable store, never the
+   secret, the pids or a backup, and prints each open run's worktree that holds work not on its remote (uncommitted
+   changes or unpushed commits). Push those first; export writes the bundle either way. `--logs` adds the deck's logs.
+2. The old device's queue is now handed over: its next deck start warns that it may be owned elsewhere, and
+   `pilot doctor` shows an `exported` row with the time.
+3. Copy the bundle to the new device. Install pilot and clone the repository there as `### Setting up a second
+   device` says.
+4. On the new device, with no deck running: `pilot store import <bundle> --dry-run` prints what the import would
+   write and writes nothing. Then `pilot store import <bundle>`. `home` maps to this home and a drive root to the
+   same drive; any other root needs `--root <name>=<path>`. Over a store that already holds data, add `--replace`:
+   the old files are set aside under `replaced-<date>/`, never overwritten.
+5. Rebuild the worktrees: import prints one `git -C <repo> worktree add <worktree> <branch>` line for each open run
+   whose worktree is missing here, and creates none. Run the ones you want.
+6. Start the deck. Runs have no session, leases are released, and a landing that was running reads `interrupted on
+   <host>`; start it again.
 
 ## Moving to a fresh public repository
 

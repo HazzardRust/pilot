@@ -16,7 +16,8 @@ use rune::{Env, Runtime};
 use serde_json::{Value, json};
 use support::{Scratch, id_in, item, read, secret, tool};
 
-const REPO: &str = "C:/work/alpha";
+// The native spelling the server returns a repo in (portable-store S1).
+const REPO: &str = r"C:\work\alpha";
 
 /// The client and the prefs read their place from the environment, which every test here shares.
 use crate::support::ENV;

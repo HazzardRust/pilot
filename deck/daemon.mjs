@@ -40,7 +40,8 @@ import { holdLeash, leashFrom } from './leash.mjs';
 import { probeDeck } from './probe.mjs';
 import { processTable } from './procs.mjs';
 import { STALL_AGE_S, noteStall, reapStalled } from './stalled-waits.mjs';
-import { archiveOld, listItems, listLiveRuns, storeDir } from './store.mjs';
+import { archiveOld, listItems, listLiveRuns, postItem, storeDir } from './store.mjs';
+import { noticeExported } from './exported.mjs';
 import { defaultsDue } from './store-defaults.mjs';
 import { startMemoryLog } from './memory.mjs';
 import { startUsageLog } from './telemetry.mjs';
@@ -277,6 +278,12 @@ export async function main() {
     closeLandedAtStart();
   } catch (err) {
     console.error('[deck] the landed gate2s a restart left open could not be resolved:', err.message);
+  }
+  // An export since the last notice is told once, where the user is (portable-store spec 10); never a refusal to start.
+  try {
+    noticeExported(storeDir(), postItem);
+  } catch (err) {
+    console.error('[deck] the store export could not be noticed:', err.message);
   }
   // A press the last daemon queued starts (gate2-frees-lane spec 7).
   try {
