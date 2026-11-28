@@ -53,8 +53,8 @@ export function worktreeTree(cwd) {
     const copy = path.join(scratch, 'index');
     if (fs.existsSync(index)) {
       fs.copyFileSync(index, copy);
-      // The copy keeps the index's mtime, which git's racy-git rule reads: an entry no older than
-      // it is hashed again, so a same-size edit in that second is seen. Linux's copy is stamped now.
+      // The copy is given the index's mtime (Linux stamps a fresh one), which git's racy-git rule
+      // reads: an entry no older than it is hashed again, so a same-size edit in that second is seen.
       const { atime, mtime } = fs.statSync(index);
       fs.utimesSync(copy, atime, mtime);
     }

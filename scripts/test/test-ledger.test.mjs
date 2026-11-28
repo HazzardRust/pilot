@@ -137,6 +137,7 @@ test('a same-size edit right after a run is a changed tree', (t) => {
   const { cwd } = repo(t);
   // The index, a.txt's entry in it and the edit all in one second: git tells a same-size,
   // same-second edit from no edit only by its racy-git rule, an entry no older than the index.
+  // Red only where a copied file is stamped now (Linux); Windows' copy keeps the mtime.
   const second = new Date('2026-01-01T00:00:00Z');
   const file = path.join(cwd, 'a.txt');
   fs.utimesSync(file, second, second);
