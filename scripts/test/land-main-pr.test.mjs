@@ -46,7 +46,7 @@ test('the first landing opens the main PR', () => {
   assert.equal(creates(calls).length, 1);
   // The fake records the adapter's `--body-file <f>` as `--body <text>`.
   assert.deepEqual(creates(calls)[0].filter((arg, i, all) => all[i - 1] !== '--body'), ['pr', 'create', '--base', 'main', '--head', 'pilot', '--title', 'Release: a', '--label', 'release', '--body']);
-  assert.deepEqual(bodies, [`| Feature | PR | Landing |\n| --- | --- | --- |\n| a | – | ${'a'.repeat(40)} |`]);
+  assert.deepEqual(bodies, [`## Overview\n\n- a\n\n| Feature | PR | Landing |\n| --- | --- | --- |\n| a | – | ${'a'.repeat(40)} |`]);
   assert.deepEqual(main, { number: 901, opened: true });
   assert.equal(mainLine(main), 'main gets pilot: #901 (opened)');
 });

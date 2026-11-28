@@ -9,37 +9,45 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "integrated",
+      "state": "integrated (CI fixed by codec CI fix 2, checks green at 8d2b2b8)",
       "branch": "slice/portable-store-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "pushed c93ad90; ts approve on merged diff; not integrated",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/portable-store-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s2"
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "pushed 8c6b4d2; ts approve on merged diff; not integrated",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/portable-store-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s3"
     },
     {
       "slice": "S4",
-      "state": "planned",
+      "state": "pushed feba0f1 (on S2); ts approve, security approve; not integrated",
       "after": [
         "S2"
-      ]
+      ],
+      "branch": "slice/portable-store-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s4"
     },
     {
       "slice": "S5",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S4"
-      ]
+      ],
+      "branch": "slice/portable-store-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s5"
     },
     {
       "slice": "S6",
@@ -50,56 +58,61 @@
     },
     {
       "slice": "S7",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S4"
-      ]
+      ],
+      "branch": "slice/portable-store-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s7"
     },
     {
       "slice": "S8",
       "state": "integrated 3bf2e27, checks green (B3 run deferred to QA)",
       "branch": "slice/portable-store-s8",
       "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s8"
+    },
+    {
+      "slice": "codec CI fix",
+      "state": "on feat at f523091 by user push; still red, see S1",
+      "after": [
+        "S1"
+      ],
+      "branch": "fix/portable-store-s1-ci",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-portable-store-s1"
+    },
+    {
+      "slice": "codec CI fix 2",
+      "state": "on feat at 8d2b2b8; checks green (Windows job re-run)",
+      "after": [
+        "S1"
+      ],
+      "branch": "fix2/portable-store-s1-ci",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix2-portable-store-s1"
+    },
+    {
+      "slice": "drift 8ff2d9a",
+      "state": "merged at 697d10d, pushed; gate red on 2 rune empty:: tests until the drift fix integrates"
+    },
+    {
+      "slice": "S9 drift fix (added)",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "fix/portable-store-drift",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-portable-store-drift"
+    },
+    {
+      "slice": "drift 3c08423",
+      "state": "merged at e39480a, pushed, clean; replanned, plan kept",
+      "after": [
+        "S9 drift fix (added)"
+      ]
     }
   ],
-  "next": "Pilot integrating S1 39e439e (TS WARNING; silent-failure BLOCK, then APPROVE on re-review). Then checks, release/co-pilot, spawn co-pilot for S2+S3. Fix round: store-v4 test asserts .bak bytes, no .corrupt-*, a v3 foreign-root case. Gate 2 names: mangled item repo stays raw; rootless paths stay absolute; API repo spelling native.",
-  "updatedAt": "2026-11-25T05:04:09.351Z",
+  "next": "co-pilot: S3 integrating on e39480a; S2 B4/S4 B5 evidence in hand (API, browser look for QA); S5, S7 implementing; then S2, S4 integrate, S6, fundamentalist, QA.",
+  "updatedAt": "2026-11-28T06:32:08.013Z",
   "friction": [
-    {
-      "agent": "architect",
-      "what": "No list of which store fields hold paths; two children traced about 40 readers to build one",
-      "evidence": "3,290 paths over 29 field paths in a 4.6 MB deck.json"
-    },
-    {
-      "agent": "architect",
-      "what": "Repo identity stored two ways",
-      "evidence": "folded keys in decks/coPilots/switches/budgets/records.repo; raw spellings in items.repo/runs.repo/worktrees"
-    },
-    {
-      "agent": "architect",
-      "what": "Several writers hard-code ~/.claude/pilot and ignore PILOT_DECK_DIR",
-      "evidence": "wrapper-log.js:34, apply-reach.mjs:27, run-env.mjs:38, live-root.mjs:52, integrate.mjs:162"
-    },
-    {
-      "agent": "architect",
-      "what": "store-core.mjs at 774 of the 800-line facade bar",
-      "evidence": "constrains portable-store S1 and S2"
-    },
-    {
-      "agent": "architect",
-      "what": "Auto mode gives no verdict when a deck call is paired with another call in one response",
-      "evidence": "architect once, pilot three times this session; re-running alone passed"
-    },
-    {
-      "kind": "drain",
-      "what": "pilot wait exited 1 on a deck timeout six times in one session; each restart is a turn",
-      "size": 6
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "pilot verdicts finds only a bold - **A<n>** id; the predecessor wrote plain - A<n>, one failed run; it also placed the last id's verdict after the following paragraph, moved by hand",
-      "evidence": "architect hand-back, design/portable-store 9196b44"
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "Edit refused a file not just Read, costing a round trip on three files; a sed -i on a tracked file was hook-blocked, redone as six Edit calls",
@@ -141,6 +154,179 @@
       "what": "two commit trailers in play: the co-pilot's brief gave one model and session, the feature brief.md another",
       "evidence": "S1 report decision 6",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed ran the full suite again (selection 31426 chars over 24000) for a two-file slice, ~15 min, backgrounded twice by the shell timeout",
+      "evidence": "S3 report GATE",
+      "size": 15
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice Evidence lines naming 'the real copy' need an A7 permission round trip each; the slice file should name the scratch-copy method and its bounds",
+      "evidence": "S2 and S3 A7 questions to main",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "S1 gated on Windows only passed locally (5081/0) and broke 243 tests on macOS, 221 on ubuntu and 22 on Windows CI; integrate's local gate cannot see a posix break, found only after merge to feat",
+      "size": 20
+    },
+    {
+      "kind": "drain",
+      "what": "third and fourth co-pilot forced to hand back with a child live; pilot integrates and triages CI itself",
+      "size": 15
+    },
+    {
+      "kind": "drain",
+      "what": "pilot integrate refuses every branch while the feature tip is red in CI, including the branch that fixes it; auto mode refused the fast-forward push as a way round: a red tip can only be fixed by the user's own push",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back forced again while two children were live in their gate runs",
+      "evidence": "handback-send-enforce while fix2 and S4 awaited gates",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "five forced hand-backs in one spawn on portable-store while two children ran gates; each re-sends ~80k tokens and changes nothing",
+      "evidence": "hand-backs 1-5 from the portable-store co-pilot, state identical in 1-3 and 4-5"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "no POSIX runtime locally, so POSIX evidence needs a ~20 min dispatched CI run; an 8.3 TEMP would have reproduced the Windows CI failure before push",
+      "evidence": "portable-store codec fix 2, Gate run 46039380175"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "two repo rules (no child_process in deck/store*.mjs; every module listed in deck/README.md) surface only in the full gate, costing two commits and a second gate",
+      "evidence": "portable-store S4, create.test.mjs:220, deck-readme.test.mjs:27"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "Record's S4 row lagged the branch: said 'implementing, not pushed' while origin had feba0f1, so a successor re-derives state from git",
+      "evidence": "git ls-remote slice/portable-store-s4 = feba0f13 vs run.json S4 row"
+    },
+    {
+      "kind": "drain",
+      "what": "deck_read open brief limit 100: ~100 closing reports still listed as open",
+      "size": 12000
+    },
+    {
+      "kind": "drain",
+      "what": "co-pilot spawned on a ticket blocked on the user's push, at the Stop hook's direction; it could start nothing",
+      "size": 39879
+    },
+    {
+      "agent": "pilot",
+      "what": "Windows CI flake: host-contract.test.mjs:93 after-hook rmSync of its temp dir throws EPERM, failing 'the allowlist still refuses'; same sha green on the prior run",
+      "evidence": "Gate 46039483257 on 8d2b2b81: 5094 pass, 1 fail, windows only; Gate 46039380175 same sha success x3"
+    },
+    {
+      "agent": "pilot-lander",
+      "what": "Landing of prune-run-trees printed 'no ci proof: scripts/gate.mjs changed'; it landed without CI proof",
+      "evidence": "pilot landing itm_b688c4848a4e output line 8"
+    },
+    {
+      "agent": "pilot-lander",
+      "what": "deck_status finished came after prune removed the feat worktree, so run.json was not written; the clean tail's order loses that write",
+      "evidence": "'run.json not written: the recorded worktree is gone'"
+    },
+    {
+      "agent": "pilot-lander",
+      "what": "pilot landing ran past 180s and was moved to the background by the harness",
+      "evidence": "task bjlbcx2o2"
+    },
+    {
+      "agent": "pilot",
+      "what": "pilot checks reads the newest run on a sha: a flaky workflow_dispatch run on the fix branch made the feat tip read red though an earlier run on the same sha was green; push to feat triggered no run",
+      "evidence": "pilot checks 8d2b2b8: 'checks red: gate (windows-latest)' from run 46039483257"
+    },
+    {
+      "agent": "pilot-lander",
+      "what": "pilot checks on the gate2's sha read green, but the deck lands the feature tip one run-record commit later, which CI never ran on; land refused 'checks none'",
+      "evidence": "checks green at e112532; NOT landed: checks none at 41f5760"
+    },
+    {
+      "agent": "pilot-lander",
+      "what": "land worktree was cut before an earlier queued landing finished, so the resolved merge sat on a stale pilot tip and the lander reported the stale tip as current",
+      "evidence": "d77dda1c parents f8a49be8 41f5760a; origin/hazzardrust-pilot 27fae979"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce hook forced four hand-backs on one ticket while its children were live",
+      "evidence": "a75e5a8 hand-backs: 'hook-forced, children live, nothing new' x2 after two full tables"
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "a read-only reviewer cannot run a slice's tests on the merged tree: creating a throwaway worktree was denied, so it reads merge-tree output instead",
+      "evidence": "S4 re-review: 'my attempt to create a throwaway worktree was denied'"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "a successor co-pilot inherits no Verdict or Evidence rows for pushed slices: the predecessor's implementer reports lived only in its context, so S2, S3, S4 were re-reviewed",
+      "evidence": "run.json S2/S3 state 'pushed' with no verdicts; 4 reviewer spawns",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "context compacted during diagnosis before any commit, losing every finding; it restarted from a clean worktree",
+      "evidence": "'My context was compacted... no record of any finding before the compaction'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "rune tests key on forward-slash repo literals that the deck answers back native on Windows since S1; 14 other rune test files use C:/work literals and will drift the same way the first time one compares",
+      "evidence": "drift fix 6d4a74e: tickets.repo 'C:\\\\work\\\\alpha' on 697d10d vs 'C:/work/alpha' on 8ff2d9a"
+    },
+    {
+      "agent": "architect",
+      "what": "The checker now requires an ## Overview the signed artefact never had",
+      "evidence": "check-slices overview-plain, exit 1"
+    },
+    {
+      "agent": "architect",
+      "what": "No deck_read tool, so it found the earlier L2 question by reading the live deck.json",
+      "evidence": "itm_ad2385df32fa"
+    },
+    {
+      "agent": "architect",
+      "what": "Harness forced hand-backs before main's verdict lines and before the gate1 could post; a leftover blocked-step thread refused the gate1",
+      "evidence": "3 hand-backs; refusal on itm_fde95ed5d125"
+    },
+    {
+      "agent": "co-pilot",
+      "what": "A successor co-pilot inherits no Verdict or Evidence rows for pushed slices",
+      "evidence": "S2, S3, S4 needed 4 re-review spawns"
+    },
+    {
+      "agent": "implementer",
+      "what": "14 rune test files use C:/work literals the deck now answers back in native form",
+      "evidence": "2 empty:: tests red after the drift merge"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot deck --scratch cannot take an existing store (always mkdtemp); a copied store needs node deck/daemon.mjs with PILOT_DECK_DIR by hand",
+      "evidence": "S2 B4 evidence run on feba0f1",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node bin/pilot.mjs deck --help starts the deck launcher against the live store instead of printing help",
+      "evidence": "printed 'The deck is up at 127.0.0.1:4321'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "chrome-devtools tools not reachable from a Sonnet implementer; S2 B4 read over the HTTP API, no screenshot",
+      "evidence": "ToolSearch found none",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "slice implementer reports lost at a pause leave integrate refusing (no Evidence rows); re-gathering cost one agent",
+      "evidence": "NOT integrated slice/portable-store-s3: S3: B1 has no --trailer Evidence",
+      "size": 2
     }
   ]
 }

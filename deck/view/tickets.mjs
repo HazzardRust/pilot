@@ -4,11 +4,9 @@
  * reads are the page's (`laneOf`, `coPilotStateOf`); `swapOf` is `renderTicketQueue`'s, which lives inline there.
  */
 import {
-  KIND_STEPS,
   coPilotStateOf,
   isBlocking,
   isLanding,
-  isOpen,
   isPaused,
   isQueued,
   isShortPath,
@@ -74,7 +72,7 @@ export function ticketsView(reads, query = {}) {
         artefact: ticket.plan ? { name: String(ticket.plan.artefact), gate1: ticket.plan.gate1 } : null,
         shortPath: isShortPath(ticket),
         threads: items
-          .filter((item) => item.ticket === ticket.id && (isQueued(item) || (item.kind === KIND_STEPS && isOpen(item))))
+          .filter((item) => item.ticket === ticket.id && isQueued(item))
           .map(({ id, kind, title }) => ({ id, kind, title })),
         spec: ticket.body ?? '',
       };

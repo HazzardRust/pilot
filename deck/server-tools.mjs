@@ -15,11 +15,12 @@ import { checksRefusal } from './gate2-checks.mjs';
 import { startLanding } from './landing.mjs';
 import { LAND_AGAIN, LANDING_KINDS } from './landing-replies.mjs';
 import { startPrWrite } from './pr-writes.mjs';
+import { pruneStageOf, startRunPrune } from './run-prune.mjs';
 import {
   KIND_CREW_HANDOFF, KIND_GATE1, KIND_GATE2, KIND_HANDOFF, KIND_TICKET, KIND_WALKTHROUGH, OWNER_KINDS, SIGN_OFF, authorKind, isChainHandoff, isGate, isOpen, isRecord, liveTicketOf, messagesOf, ownerOf, stateOf, waiterKind,
 } from './items.mjs';
 import { postFilled } from './closing-report.mjs';
-import { openCrewHandoffsOf } from './crew-handoff.mjs';
+import { closeCrewHandoffs } from './crew-settle.mjs';
 import { assertOnPilotTip, assertVerdicts } from './lineage.mjs';
 import { selectItems } from './read.mjs';
 import { laneOf, lanesOf } from './lanes.mjs';
@@ -52,20 +53,6 @@ function replacedClause(id, entry) {
 }
 /** A co-pilot `granted` or `released` on a ticket, as a crew hand-off's step (crew-handoff-trace spec 1), after the store took it. */
 const coPilotStep = (name, ticket) => step({ step: name, kind: KIND_CREW_HANDOFF, ticket });
-/** A grant closes its ticket's open crew-handoffs, each with its `resolved` row; `; closed <id>` per close (crew-handoff-trace spec 5). */
-function closeCrewHandoffs(ticket) {
-  return openCrewHandoffsOf(listItems(), ticket).map((item) => {
-    // The grant has already taken: a refused close is named in its answer, never thrown over it.
-    try {
-      resolveItem(item.id, 'successor granted');
-    } catch (err) {
-      if (!(err instanceof DeckRefusal)) throw err;
-      return `; ${item.id} left open: ${err.message}`;
-    }
-    step({ step: 'resolved', kind: item.kind, item: item.id, ticket });
-    return `; closed ${item.id}`;
-  }).join('');
-}
 /** The `why` of a re-cut the pilot asks for by hand; the deck's own drift checks name theirs (never-stuck S2, S3). */
 const RECUT_BY_PILOT = 'sent back to planning by the pilot';
 
@@ -295,9 +282,16 @@ function rewordedSections(was, now, artefact) {
  * `WRITING_TOOLS` below. Synchronous, so a refusal is thrown where the caller stands and
  * nothing is half-written behind it. `deps` is `startLanding`'s and `startPrWrite`'s seams, for the
  * tests, and `prWrite(ticket, repo)`, the deck write a gate1 post and a status of its ticket start (spec 2).
+ * `lineageTimeout` is a gate1's lineage and verdict deadline in ms, for the tests; unset, the deck's live 5 s
+ * (lineage-slow-git L1).
  */
 export function callTool(name, args, deps = {}) {
-  const { prWrite = (ticket, repo) => startPrWrite(ticket, repo, deps), ...land } = deps;
+  const {
+    prWrite = (ticket, repo) => startPrWrite(ticket, repo, deps),
+    runPrune = (ticket, repo, slug, stage) => startRunPrune(ticket, repo, slug, stage, deps),
+    lineageTimeout,
+    ...land
+  } = deps;
   if (name === 'deck_post') {
     // `repo` is the caller's own directory, stamped by the stdio client; a ticket may be
     // filed under a worktree of it and nowhere else (run-chaining S6).
@@ -312,8 +306,8 @@ export function callTool(name, args, deps = {}) {
       // The record is read off the gate's own ticket, in its own repository, whoever posts it (architect-runs-red A1).
       const ticket = listItems().find((item) => item.id === args.ticket && item.kind === KIND_TICKET && sameRepo(item.repo, args.repo));
       // Its run base, when the record names one, is the ref the design branch is cut from (audit-f14 S2).
-      assertOnPilotTip(args.repo, args.branch, { base: ticket ? recordForTicket(args.repo, ticket.id).record?.base : undefined });
-      assertVerdicts(args.repo, args, { record: ticket?.verdicts });
+      assertOnPilotTip(args.repo, args.branch, { base: ticket ? recordForTicket(args.repo, ticket.id).record?.base : undefined, timeout: lineageTimeout });
+      assertVerdicts(args.repo, args, { record: ticket?.verdicts, timeout: lineageTimeout });
     }
     if (args?.kind === KIND_GATE2) {
       assertCleanOnPilot(args.repo, args.sha);
@@ -480,6 +474,9 @@ export function callTool(name, args, deps = {}) {
     // Every status of a ticket with a gate1 rewrites its feature PR from the record just saved (spec 2).
     const gate1 = record?.ticket === undefined ? undefined : listItems().find((item) => item.kind === KIND_GATE1 && item.ticket === record.ticket);
     if (gate1) prWrite(gate1.ticket, gate1.repo);
+    // Gate 1 signed or the run abandoned: a detached child prunes the run's trees, no git in this request (A4).
+    const stage = pruneStageOf(args?.finished);
+    if (stage !== null && typeof runRepo === 'string') runPrune(record?.ticket, runRepo, record?.slug, stage);
     // One line, never the record (spec 22.2): the answer is paid in the pilot's context
     // on every call, and the record is on disk for anything that needs it. A ticket taken
     // in place under the mark is named, so the same session knows it holds it (handoff-over-mark L2).

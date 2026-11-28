@@ -7,10 +7,13 @@
 
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
+import { hostPlatform } from '../hooks/lib/platform.js';
 import { repoKey } from './items.mjs';
+import { defaultRoots, encodePath } from './store-codec.mjs';
 import { storeDir } from './store.mjs';
 import { zeroCounts } from './transcripts.mjs';
 
@@ -241,15 +244,46 @@ export function renderReport(report) {
   return { table, deckBody };
 }
 
-/** A repo key as one directory name: readable, and unique by a hash of the key itself. */
-function directoryFor(repo) {
-  const key = repoKey(repo);
+/** A key as one directory name: readable, and unique by a hash of the key itself. */
+const nameOf = (key) => {
   const readable = key.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(-60);
-  const hash = crypto.createHash('sha256').update(key).digest('hex').slice(0, 10);
-  return `${readable}-${hash}`;
+  return `${readable}-${crypto.createHash('sha256').update(key).digest('hex').slice(0, 10)}`;
+};
+
+/** A repository's audit folder name, from its stored path (portable-store S3), so it is one name on every machine. */
+export const directoryFor = (repo, roots = defaultRoots(os.homedir(), hostPlatform())) => nameOf(encodePath(repo, roots));
+
+const TOLD = new Set();
+
+/**
+ * The folder an older deck named by the absolute path becomes the new name, once, when the new name is free.
+ * Both present: both kept, nothing merged or deleted, the new name read, one line on stderr.
+ */
+function renameLegacyDir(repo, dir) {
+  const legacy = path.join(path.dirname(dir), nameOf(repoKey(repo)));
+  if (legacy === dir || !fs.existsSync(legacy)) return;
+  if (fs.existsSync(dir)) {
+    if (TOLD.has(dir)) return;
+    TOLD.add(dir);
+    console.error(`[deck] the audit folders ${legacy} and ${dir} both exist; ${dir} is read and ${legacy} is kept as it is`);
+    return;
+  }
+  try {
+    fs.renameSync(legacy, dir);
+  } catch (err) {
+    // ENOENT: another process renamed it first. Anything else (a lock): the folder is kept where it is, and the next call tries again.
+    if (err.code !== 'ENOENT' && !TOLD.has(legacy)) {
+      TOLD.add(legacy);
+      console.error(`[deck] the audit folder ${legacy} could not be renamed to ${dir} (${err.message}); it is kept as it is`);
+    }
+  }
 }
 
-const auditDir = (repo) => path.join(storeDir(), 'audits', directoryFor(repo));
+const auditDir = (repo) => {
+  const dir = path.join(storeDir(), 'audits', directoryFor(repo));
+  renameLegacyDir(repo, dir);
+  return dir;
+};
 const recordFile = (repo) => path.join(auditDir(repo), 'record.json');
 
 /** handoff-books L2: the offer repeats after this many counted hand-offs since the last offer or report. */

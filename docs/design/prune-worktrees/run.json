@@ -1,0 +1,393 @@
+{
+  "slug": "prune-worktrees",
+  "feature": "Prune worktrees when jobs end",
+  "ticket": "itm_0ddca8a8e2f0",
+  "branch": "feat/prune-worktrees",
+  "base": "hazzardrust-pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-prune-worktrees",
+  "artefact": "docs/design/prune-worktrees/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated at d019953; checks green",
+      "branch": "slice/prune-worktrees-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at 5411d61; gate 5089 pass, 0 fail; checks green",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/prune-worktrees-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated (50e8a4a); checks green",
+      "branch": "slice/prune-worktrees-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated; Windows fix 0bf3f09 on feat, checks green at 0bf3f09",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/prune-worktrees-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated at 01feb88; checks green",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/prune-worktrees-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "integrated at 0061fc1; checks green",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/prune-worktrees-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s6"
+    },
+    {
+      "slice": "S7",
+      "state": "integrated at 9dbfd75; checks green",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/prune-worktrees-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s7"
+    },
+    {
+      "slice": "S8",
+      "state": "integrated at 768684d; checks green",
+      "after": [
+        "S5"
+      ],
+      "branch": "slice/prune-worktrees-s8",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s8"
+    },
+    {
+      "slice": "macOS test fix",
+      "state": "on feat at 1bdf03d",
+      "after": [
+        "S4"
+      ],
+      "branch": "fix/prune-worktrees-macos",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-prune-worktrees-macos"
+    },
+    {
+      "slice": "Windows test fix",
+      "state": "on feat at 0bf3f09 (user ff, itm_4c410e19d219 closed); checks green",
+      "after": [
+        "S4"
+      ],
+      "branch": "fix/prune-worktrees-windows",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-prune-worktrees-windows"
+    },
+    {
+      "slice": "Drift merge",
+      "state": "on feat; ceiling red at e931e74 answered by c7cc702 (checks green)",
+      "after": [
+        "S4"
+      ],
+      "branch": "fix/prune-worktrees-drift",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-prune-worktrees-drift"
+    },
+    {
+      "slice": "S9 Fixture fold (added)",
+      "state": "superseded by S10 (fold cannot reach the bar); slice file c4e5f1e not integrated",
+      "after": [
+        "S8"
+      ],
+      "branch": "slice/prune-worktrees-s9",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s9"
+    },
+    {
+      "slice": "S10 Prune starts less git (added)",
+      "state": "integrated at 8c4a18d; checks green",
+      "after": [
+        "S8"
+      ],
+      "branch": "slice/prune-worktrees-s10",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s10"
+    },
+    {
+      "slice": "Feature",
+      "state": "fix round implementing; security review APPROVE (SEC1 kept, SEC2 nit, SEC3 dropped)",
+      "branch": "feat/prune-worktrees",
+      "worktree": "C:/Users/jrylk/Projects/pilot-feat-prune-worktrees"
+    },
+    {
+      "slice": "Fix round",
+      "state": "integrated at 90e14461; checks green at eb120a0 (after drift merge 2)",
+      "after": [
+        "S10 Prune starts less git (added)"
+      ],
+      "branch": "fix/prune-worktrees"
+    },
+    {
+      "slice": "S11 One porcelain parser and one path-equality export (added)",
+      "state": "pushed 1505446; review approve; integrating",
+      "after": [
+        "Fix round"
+      ],
+      "branch": "slice/prune-worktrees-s11",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s11"
+    },
+    {
+      "slice": "Drift merge 2",
+      "state": "on feat at 3ba6a2d; checks green at eb120a0",
+      "after": [
+        "Fix round"
+      ],
+      "branch": "fix/prune-worktrees-drift2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-prune-worktrees-drift2"
+    }
+  ],
+  "findings": [
+    "kept: F1 defect — integrate.mjs:645 removeTree(cwd, dir) uses default holder () => null (worktree-remove.mjs:155), so integrate removes a tree a live process holds, against L4; pilot checked both lines",
+    "kept: SEC1 defect — worktrees.mjs prune calls removeTree with no holder, so removeTree's own re-check defaults to () => null (security-reviewer LOW); pass holder through, same family as F1, +1",
+    "kept: F3 defect — record rule has two homes that disagree (RECORD_CODES vs dirtOf); classify uses status + isRecord, delete the mirror set and featRecords; not checked by pilot",
+    "kept: F2 simplify — built as added slice S11 at 1505446: two porcelain parsers (not three) and the path helpers to one home, net -13; same/inside exported with no importer, left as a nit",
+    "kept: F4 simplify — prune's remove/branch callbacks replaced by { branchFlag } and a returned err, about -10",
+    "kept: F5 simplify — worktrees.mjs:351 remove option used by one test only; delete option and spy, keep on-disk asserts",
+    "dropped: F6 simplify — renaming the flag across agent prose costs more than the glossary collision",
+    "kept: nits simplify — keptLine at worktrees.mjs:614; lstat links only at worktree-remove.mjs:133-141; S10.md after-reason and behaviour form; SEC2 worktree-remove.mjs header claims nothing changes before every check passes, but unlinkLinks runs before remove: fix the wording, 0 net",
+    "dropped: SEC3 simplify — landed removal with --force deletes untracked files, an embedded repo included: by design under A3, and guarding it would overturn A3 for a rare case",
+    "dropped: S10-dual-moved simplify — it is spec 13's spawn budget while the ceiling question itm_1b18772998c1 is open",
+    "dropped: A4/S5 simplify — user kept A4 on itm_421941fbcb07"
+  ],
+  "next": "integrate S11, pilot checks; base check; QA",
+  "updatedAt": "2026-11-27T08:15:40.145Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "duplicate Blocked question posted by pilot beside the deck's own, then closed",
+      "size": 600
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck README module table is pinned by a test only the full suite runs, so a new deck module cost a second 20-minute gate",
+      "evidence": "every deck module is listed: run-prune.mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "git prints worktree paths with / while path.join gives backslashes on Windows; first asserts failed on spelling",
+      "evidence": "B2/B3 kept unpushed C:/.../design"
+    },
+    {
+      "agent": "pilot:pilot-lander",
+      "what": "shared cargo target across worktrees: a concurrent build failed a landing with LNK1104 after a green node suite",
+      "evidence": "land log 20261125T091619281Z line 5552"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "quiet reporter gives no skipped count",
+      "evidence": "gate line `tests 5199 · pass 5167 · fail 0` leaves 32 unaccounted"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 evidence rows lost with an earlier transcript forced a full re-proof with a throwaway red worktree",
+      "evidence": "S5 re-proof at 2bfb4fc, 14 tests red-then-green",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "QA prompt-size pin lives in qa-preview.test.mjs, not measure-prompt.test.mjs where the slice puts the pins",
+      "evidence": "measure-prompt showed pilot-qa -20.75 headroom; found by grep 5264"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "prompt-size change needs a base measurement from a second full checkout",
+      "evidence": "detached worktree of 9d717761 only to run measure-prompt.mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "implementer-steps.test.mjs pins a bare command string in agent text, forcing an edit outside the slice",
+      "evidence": "implementer-steps.test.mjs:14 indexOf('git worktree add')"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "first push rejected with GitHub Internal Server Error; retry worked",
+      "evidence": "S7 push of slice/prune-worktrees-s7"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "mklink /J fails from Git Bash, so the red throwaway worktree ran without node_modules",
+      "evidence": "'Invalid switch' from mklink /J"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice says probes injected but tagOf is not injectable, so tests need seeded real git repos at 0.5-3.5 s a case",
+      "evidence": "deck/test/doctor-worktrees.test.mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm run test:changed stops on node_modules missing in a fresh worktree, first gate run wasted",
+      "evidence": "\"node_modules missing: run npm ci\""
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "integrate-prune.test.mjs takes ~40 s; piped through tail it passed the Bash 120 s default",
+      "evidence": "needed run_in_background plus pilot wait-for"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "first reviewer's report lost, could not be resumed (No transcript found); a second Sonnet review was run on the final head",
+      "evidence": "prune-worktrees S8 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "live prune --dry-run cannot show a 'would remove': the holder check keeps all 19 landed trees 'live unsure' on this machine, so B3 is evidenced by tests only",
+      "evidence": "prune-worktrees S8 report, B3 run of 89 lines",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "bare node --test without PILOT_BRANCH gives 9 false NO_NAME failures; gate.mjs:126 sets it",
+      "evidence": "drift merge report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "spawn ceiling and integrate pin surface only in a 10-minute full gate, so the merge gated twice",
+      "evidence": "gate 1 on f0bd43f6 integrate-pin 19>18; gate 2 spawns 14110>13597",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: ceiling rule changed three times mid-run, one extra 10-minute gate",
+      "evidence": "S5 report, f396322",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: rebasing pin-history commits onto pins upstream also moved leaves an empty fixup",
+      "evidence": "S6 report, e0e514e",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "S5 and S6 reports delivered to main after forced co-pilot hand-back, relayed by hand",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: a textually clean rebase was semantically broken (upstream removed the PILOT_BRANCH export); found only at test import",
+      "evidence": "S7 report, d8992f4",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: deck 800-line source bar and spawn ceilings fail only in the full gate, one extra 10-minute gate",
+      "evidence": "facades.test.mjs doctor.mjs 807 lines; s7-gate.log",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7 rebase: every slice landing moves the spawn ceilings, so every rebase conflicts in gate.mjs and needs a full 10-minute suite to measure",
+      "evidence": "S7 report 8277689; S5 f396322",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8: worktrees.test.mjs fails alone without PILOT_BRANCH (only gate.mjs pins it); ceilings already over on base so no slice gate can exit 0",
+      "evidence": "S8 report 61c7179",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: gate log absent until the lock is taken, so pilot wait-for returned early; Monitor and until loops unavailable",
+      "evidence": "S6 report f04cded",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: context summary came back empty, work re-derived; no documented per-file spawn counter and integrate-prune fails alone without PILOT_BRANCH",
+      "evidence": "S9 report c4e5f1e; pw-s9-count.sh",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10: count-spawns.mjs records file and kind but not git arguments; a separate tracer was needed to find hot call sites",
+      "evidence": "S10 report; scratchpad s10-trace.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "QA brief and installed definition create the QA tree with bare git worktree add (untagged), while branch's pilot-qa.md:35 says pilot worktrees add --run",
+      "evidence": "QA report; agents/pilot-qa.md:35",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner did not return before the enforced hand-back; evidence pass not run",
+      "evidence": "fundamentalist report tools table",
+      "size": 2
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "mutation run hit its 900 s timeout with 4256 mutants and no verdicts; report arrived after the fundamentalist had finished; Stryker sandbox left locked in its scratch dir",
+      "evidence": "exit 124; fundamentalist reported its evidence runner never returned",
+      "size": 2
+    },
+    {
+      "agent": "pilot:security-reviewer",
+      "what": "S4 and S7 hashes are merge commits, so git show printed no diff",
+      "evidence": "diffed against first parent instead"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a test file run alone fails every integrate test with 'no pilot branch name', since only the gate sets PILOT_BRANCH; one false red on F1's first run",
+      "evidence": "integrate-prune.test.mjs 0 pass / 10 fail until PILOT_BRANCH=pilot was exported",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "handed back while holding for the limit answer, so the round needed a resume; two nits too terse in the brief to apply",
+      "evidence": "report at 84fef7e1, unpushed; asked for lstat and S10.md nits verbatim"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "spawn ceilings sit at the base's exact count, so any new git-fixture test turns the gate red and needs a probe to find the cause",
+      "evidence": "+29 git from two red-green tests equals the whole overshoot 13053 - 13024 on fix/prune-worktrees cf155eaf"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a test file run alone fails every integrate test with 'no pilot branch name' unless PILOT_BRANCH is exported; cost a false red",
+      "evidence": "integrate-prune.test.mjs 0 pass / 10 fail until PILOT_BRANCH=pilot was set"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "base's fixture refactor (test-body-git S13) and the fix round's two tests collide silently: scratch add() throws on names outside the seeded MERGED/UNMERGED",
+      "evidence": "merge-tree showed one conflict (gate.mjs); merged gate 2 reds at worktrees.test.mjs:109,:124 'scratch: gone is not merged in origin'",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the fixture refactor hid a second assumption in the gone test: its tracked upstream, which the new add() does not create",
+      "evidence": "worktrees.test.mjs:113 fatal: branch 'gone' has no upstream information",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the shared MERGED list orders merge commits on main, so appending a name shifts every HEAD~n that assumes it is last",
+      "evidence": "worktrees.test.mjs:117 0 !== 1 after MERGED gained raced last",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S11 worktree had no node_modules, so the first gate run exited 1",
+      "evidence": "implementer report: first gate exit 1, rerun after install",
+      "size": 15
+    }
+  ]
+}

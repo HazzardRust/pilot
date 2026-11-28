@@ -1,9 +1,10 @@
 /** project-glossary S4: `staleTerms` names each glossary term the repository no longer uses (L3). */
 
+import { gitFixture } from './lib/git-fixture.mjs';
+
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -14,18 +15,23 @@ import { appendLog } from '../glossary-log.mjs';
 const FIXTURE = fileURLToPath(new URL('./fixtures/glossary-stale/', import.meta.url));
 const CLI = fileURLToPath(new URL('../glossary-stale.mjs', import.meta.url));
 
-/** A fresh git repository in a temp directory: `from` copied in, then `files` written, all tracked. */
+const git = (dir, ...args) => execFileSync('git', ['-c', 'core.autocrlf=false', ...args], { cwd: dir, stdio: 'pipe' });
+
+/**
+ * A git repository, initialized once per file and restored empty for each test: `from` copied in,
+ * then `files` written, all tracked. A second call in one test is a second, fresh repository.
+ */
 function makeRepo(t, { from, files = {} } = {}) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'glossary-stale-'));
-  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const dir = gitFixture(t, 'glossary-stale:empty', (root) => {
+    git(root, 'init', '-q');
+    return root;
+  });
   if (from) fs.cpSync(from, dir, { recursive: true });
   for (const [file, text] of Object.entries(files)) {
     fs.mkdirSync(path.dirname(path.join(dir, file)), { recursive: true });
     fs.writeFileSync(path.join(dir, file), text);
   }
-  const git = (...args) => execFileSync('git', ['-c', 'core.autocrlf=false', ...args], { cwd: dir, stdio: 'pipe' });
-  git('init', '-q');
-  git('add', '.');
+  git(dir, 'add', '.');
   return dir;
 }
 

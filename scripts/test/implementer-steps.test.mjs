@@ -11,7 +11,7 @@ const SOURCE = read('agents/pilot-implementer.md');
 const WHERE = flat(sectionOf(SOURCE, 'Where you work'));
 
 test('Where you work does not offer a junction to the checkout', () => {
-  assert.notEqual(WHERE.indexOf('git worktree add'), -1, 'Where you work no longer creates the worktree');
+  assert.notEqual(WHERE.indexOf('pilot worktrees add'), -1, 'Where you work no longer creates the worktree');
   // lint: the worktree installs its own dependencies, never a junction to the checkout's
   assert.doesNotMatch(WHERE, /junction/i, "Where you work offers a junction to the checkout's dependencies");
 });

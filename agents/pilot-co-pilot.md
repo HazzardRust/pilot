@@ -53,9 +53,9 @@ Read steps 4 to 8 of `${CLAUDE_PLUGIN_ROOT}/agents/pilot.md`, and its
   `base check: in` or `missing`; on a miss, `pilot integrate --dir <feat>` with no
   branch first, so review and QA see the base.
 - Step 7's `pilot land` prints `landed … at <sha>`: the feature row reads
-  `landed on pilot at <sha>`. A `NOT landed` conflict line goes to `main`
+  `landed on <login>-pilot at <sha>`. A `NOT landed` conflict line goes to `main`
   verbatim: its hunks are the lander's. On `NOT landed`, or a refused call, never retry
-  or merge into `pilot` another way, which would skip the landing's checks: send QA `feat/<slug>`'s tip and name it a
+  or merge into your pilot branch another way, which would skip the landing's checks: send QA `feat/<slug>`'s tip and name it a
   blocked step in the hand-back; nothing waits on it.
 - The verdicts of step 7 are yours: judge each finding before a fixer sees it.
   A fix brief for a defect, not a tidy, names `pilot:diagnosing-bugs`, so the
@@ -106,7 +106,7 @@ its command, do the work that does not need it, and carry on. You have no
 blocked step as a blocking item titled `Blocked: <command>` on your ticket.
 A no-verdict (`Classifier unavailable`) is not a refused call: reissue it once, in a response of its own; a second is a blocked step.
 Never write a settings file or a permission rule, and never brief a child to: the permissions are the user's.
-Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove with `pilot worktrees remove`.
 Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
 Two call shapes auto mode refuses are never made: a `cat` of a transcript or `TaskOutput` file (read a child through `TaskOutput` itself), and `pilot land`, which is the pilot's.
 A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.

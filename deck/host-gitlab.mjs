@@ -227,6 +227,16 @@ export function gitlabHost(run) {
     testedTrees() {
       return [];
     },
+    /** The signed-in account's username from `glab api user`, or null when signed out or it answers none. */
+    login() {
+      let me;
+      try {
+        me = get('user', 'api user')?.username;
+      } catch {
+        return null;
+      }
+      return typeof me === 'string' && me !== '' ? me : null;
+    },
     signedIn() {
       try {
         run(['auth', 'status']);
