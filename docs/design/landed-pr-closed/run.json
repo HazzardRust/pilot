@@ -9,7 +9,7 @@
   "slices": [
     {
       "slice": "S1 A main-cut run's landing merges its own PR",
-      "state": "pushed 5257280",
+      "state": "integrated",
       "branch": "feat/landed-pr-closed-s1",
       "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s1"
     },
@@ -21,23 +21,25 @@
     },
     {
       "slice": "S3 A gate1 shows the run's base",
-      "state": "planned"
+      "state": "implementing",
+      "branch": "feat/landed-pr-closed-s3",
+      "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s3"
     },
     {
       "slice": "S4 The crew and docs say one line",
-      "state": "implementing",
+      "state": "pushed b969499",
       "branch": "feat/landed-pr-closed-s4",
       "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s4"
     },
     {
       "slice": "S5 The gate stops failing on the green-tree reuse test",
-      "state": "implementing",
+      "state": "pushed 1943b6e",
       "branch": "feat/landed-pr-closed-s5",
       "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s5"
     }
   ],
-  "next": "co-pilot: S1 integrating at 5257280; S2, S4, S5 implementing; S3 starts as a slot frees.",
-  "updatedAt": "2026-11-28T13:22:14.777Z",
+  "next": "co-pilot: S1 integrated 3444c44 green; S4 integrating; S5 pushed 1943b6e, integrates after S4 checks; S2, S3 implementing.",
+  "updatedAt": "2026-11-28T13:50:44.585Z",
   "friction": [
     {
       "agent": "architect",
@@ -98,6 +100,36 @@
       "kind": "drain",
       "what": "handback-send-enforce forced 3 co-pilot hand-backs on interim child notices",
       "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "pilot prompt pin has 0 token headroom; any pilot.md rewording costs a full suite run to discover",
+      "evidence": "S4 first gate: pilot share 12167.5 over 12165.5"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "co-pilot brief said take next ADR number; slice L5 and adr-allocate say leave NNNN",
+      "evidence": "S4 report; next free was 0231"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "quiet reporter prints nothing a grep finds; rerun with --test-reporter=tap for counts",
+      "evidence": "S4 targeted test runs"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "no Linux environment to loop CI's OS locally; red shown by emulating Linux copy semantics",
+      "evidence": "S5: wsl -l lists only docker-desktop, docker engine down"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "gh run view --log-failed grep for 'failing' matches passing test names",
+      "evidence": "S5 first pass 25 passing lines per run"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "away.test.mjs printed 3 failure lines with 'a gate1 names its run's base' yet counted 0 fails; passes alone",
+      "evidence": "S5 gate log on 3444c44, which has no S3 code"
     }
   ]
 }
