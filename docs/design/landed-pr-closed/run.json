@@ -1,0 +1,165 @@
+{
+  "slug": "landed-pr-closed",
+  "feature": "landing leaves no draft PR",
+  "ticket": "itm_8ae644730463",
+  "branch": "feat/landed-pr-closed",
+  "base": "hazzardrust-pilot",
+  "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed",
+  "artefact": "docs/design/landed-pr-closed/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A main-cut run's landing merges its own PR",
+      "state": "integrated",
+      "branch": "feat/landed-pr-closed-s1",
+      "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s1"
+    },
+    {
+      "slice": "S2 Every run is cut from the pilot branch",
+      "state": "pushed 4809005",
+      "branch": "feat/landed-pr-closed-s2",
+      "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s2"
+    },
+    {
+      "slice": "S3 A gate1 shows the run's base",
+      "state": "pushed 9f99218",
+      "branch": "feat/landed-pr-closed-s3",
+      "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s3"
+    },
+    {
+      "slice": "S4 The crew and docs say one line",
+      "state": "integrated",
+      "branch": "feat/landed-pr-closed-s4",
+      "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s4"
+    },
+    {
+      "slice": "S5 The gate stops failing on the green-tree reuse test",
+      "state": "integrated",
+      "branch": "feat/landed-pr-closed-s5",
+      "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s5"
+    }
+  ],
+  "next": "co-pilot: S5 integrated e5a4c0b, checks waiting; then S2 4809005, then S3 9f99218; then fundamentalist and QA.",
+  "updatedAt": "2026-11-28T14:22:30.940Z",
+  "friction": [
+    {
+      "agent": "architect",
+      "what": "run bases stored per run, nothing reports their spread",
+      "evidence": "shell loop over 25+ run.json with git log dates to see the drift"
+    },
+    {
+      "agent": "architect",
+      "what": "question refused twice on post: body over 1200 chars, missing Research: line",
+      "evidence": "deck_post errors before itm_36e90cd58798"
+    },
+    {
+      "agent": "architect",
+      "what": "making a thread blocking meant close and re-post",
+      "evidence": "itm_36e90cd58798 re-posted as itm_0a129aaf2c8a"
+    },
+    {
+      "agent": "explorer",
+      "what": "gh prints a long 'gh event listen' hint on every pr view; --log-failed tags every line UNKNOWN STEP",
+      "evidence": "gh pr view 149 output; run 46137559499 log"
+    },
+    {
+      "kind": "drain",
+      "what": "3 question posts refused for missing Research: line, re-posted",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "parallel Bash/Agent calls given no classifier verdict, re-issued alone",
+      "size": 3
+    },
+    {
+      "agent": "architect",
+      "what": "deck_status refused rows named S1..S5 because full-title rows already existed",
+      "evidence": "\"S1 A main-cut run's landing merges its own PR and S1 are both S1\""
+    },
+    {
+      "kind": "drain",
+      "what": "deck notice labelled the Gate-1 feature-PR open as 'a landing ended short'",
+      "size": 2
+    },
+    {
+      "agent": "co-pilot",
+      "what": "handback-send-enforce hook forces a hand-back each time the co-pilot ends a turn to wait on live implementers",
+      "evidence": "2 early hand-backs with S1, S4, S5 still running; hook text: 'Your report has not been delivered. Call SubagentHandback(...) now; the call ends your run.'"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "land test files fail run alone until PILOT_BRANCH=pilot is set by hand; only scripts/gate.mjs:162 sets it",
+      "evidence": "S1 first red: NOT landed: no pilot branch name x3"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "fakeGh pr edit leaves base unchanged, so a merged poll after retarget cannot be shown",
+      "evidence": "S1 wrote movingGh wrapper in land-feature-line.test.mjs"
+    },
+    {
+      "kind": "drain",
+      "what": "handback-send-enforce forced 3 co-pilot hand-backs on interim child notices",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "pilot prompt pin has 0 token headroom; any pilot.md rewording costs a full suite run to discover",
+      "evidence": "S4 first gate: pilot share 12167.5 over 12165.5"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "co-pilot brief said take next ADR number; slice L5 and adr-allocate say leave NNNN",
+      "evidence": "S4 report; next free was 0231"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "quiet reporter prints nothing a grep finds; rerun with --test-reporter=tap for counts",
+      "evidence": "S4 targeted test runs"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "no Linux environment to loop CI's OS locally; red shown by emulating Linux copy semantics",
+      "evidence": "S5: wsl -l lists only docker-desktop, docker engine down"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "gh run view --log-failed grep for 'failing' matches passing test names",
+      "evidence": "S5 first pass 25 passing lines per run"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "away.test.mjs printed 3 failure lines with 'a gate1 names its run's base' yet counted 0 fails; passes alone",
+      "evidence": "S5 gate log on 3444c44, which has no S3 code"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "architecture F6 said RUN_BASE checked on incoming field only; three read sites exist, cost a seam-change round trip",
+      "evidence": "S2: integrate.mjs:375, feature-pr.mjs:123, lineage.mjs:42"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2 owned list missed 7 test files pinning base main; found only after a ~15 min full suite",
+      "evidence": "grep -rn 'base main' --include=*.test.mjs finds them in one call"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "test:changed is the same command as test; no selected run for an implementer",
+      "evidence": "package.json"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "about 50 gate1 post sites in fixtures with no shared gate1 body helper; a new gate1 rule costs ~40 one-line edits found over two full runs",
+      "evidence": "S3: 37 files touched, first targeted run 119 failures, full gate 7 more"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "pilot-architect prompt pin had zero headroom; any addition needs an equal trim",
+      "evidence": "S3: measure-prompt 10767 / pin 10767.5"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice file anchor off by one (pilot-architect.md:161-165, step is :162-165)",
+      "evidence": "S3 fact sheet"
+    }
+  ]
+}

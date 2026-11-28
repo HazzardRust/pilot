@@ -61,7 +61,7 @@ test('the move from the legacy pilot says so on stderr, with a host and under no
   const warned = [];
   const code = await base({ cwd: hosted, say: (text) => said.push(text), warn: (text) => warned.push(text), host: { login: () => 'Octo' } });
   assert.equal(code, 0, warned.join(''));
-  assert.match(said.join(''), /^base main [0-9a-f]+\n$/, 'stdout is unchanged');
+  assert.match(said.join(''), /^base octo-pilot [0-9a-f]+ \(created from pilot\)\n$/, 'stdout names the new pilot branch');
   assert.equal(warned.join(''), moved);
 
   const none = scratchRepos(t).work;
@@ -73,11 +73,11 @@ test('the move from the legacy pilot says so on stderr, with a host and under no
   assert.equal(err, moved);
 });
 
-test('base prints the default branch even with open feat/ branches', async (t) => {
+test('base prints the pilot branch even with open feat/ branches', async (t) => {
   const { work } = scratchRepos(t);
   const { code, out } = await printed(work);
   assert.equal(code, 0);
-  assert.equal(out, `base main ${git(work, 'rev-parse', '--short', 'origin/main')}\n`);
+  assert.equal(out, `base pilot ${git(work, 'rev-parse', '--short', 'origin/pilot')}\n`);
 });
 
 test('base exits 1 and says why when origin is unreachable', async (t) => {

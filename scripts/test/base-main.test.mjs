@@ -1,6 +1,6 @@
 /**
- * audit-f14 S2 (spec 5; L9, A7): an unchained run on origin with a host is cut from the default
- * branch, and `pilot base` says so; a run on another remote, or with no host, keeps `base pilot`.
+ * landed-pr-closed S2 (spec 2; A1): every unchained run is cut from the pilot branch, on origin with a host or
+ * without one; a run on another remote says which.
  * Scratch bare repositories only; nothing reaches GitHub or a deck.
  */
 
@@ -45,9 +45,9 @@ async function printed(cwd) {
   return { code, out: said.join(''), err: warned.join('') };
 }
 
-test('an unchained run on origin is cut from the default branch', async (t) => {
-  const { work, mainTip } = scratchRepos(t);
-  assert.deepEqual(await printed(work), { code: 0, out: `base main ${git(work, 'rev-parse', '--short', mainTip)}\n`, err: '' });
+test('an unchained run on origin with a host is cut from the pilot branch, not the default branch', async (t) => {
+  const { work, pilotTip } = scratchRepos(t);
+  assert.deepEqual(await printed(work), { code: 0, out: `base pilot ${git(work, 'rev-parse', '--short', pilotTip)}\n`, err: '' });
 });
 
 test('a run on origin with no host keeps pilot', async (t) => {
@@ -60,14 +60,4 @@ test('a fork remote keeps pilot', async (t) => {
   const { work, pilotTip } = scratchRepos(t);
   setPilot(work, 'remote','fork');
   assert.deepEqual(await printed(work), { code: 0, out: `base pilot ${git(work, 'rev-parse', '--short', pilotTip)} on fork\n`, err: '' });
-});
-
-test('a bad pilot.host stops the base, naming the key', async (t) => {
-  const { work } = scratchRepos(t);
-  setPilot(work, 'host','--upload-pack=x');
-  const { code, out, err } = await printed(work);
-  assert.deepEqual({ code, out }, { code: 1, out: '' });
-  assert.match(err, /^pilot base: pilot\.host names "--upload-pack=x"/);
-  setPilot(work, 'remote','fork');
-  assert.equal((await printed(work)).code, 0, 'a fork run reads no host');
 });
