@@ -1,0 +1,306 @@
+{
+  "slug": "tested-once",
+  "feature": "tested once",
+  "ticket": "itm_7c9012a1a71a",
+  "branch": "feat/tested-once",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-tested-once",
+  "artefact": "docs/design/tested-once/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated 5a24691",
+      "branch": "slice/tested-once-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/tested-once-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated 4504f10",
+      "branch": "slice/tested-once-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/tested-once-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated 2d1c7c8",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/tested-once-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s5"
+    },
+    {
+      "slice": "feature",
+      "state": "gate2 itm_f416111ed048 posted at 30e0e03: trial clean on hazzardrust-pilot, checks green; walkthrough signed",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "branch": "feat/tested-once",
+      "pr": 154
+    },
+    {
+      "slice": "S6 slice-scope runs reusable (added)",
+      "state": "integrated b534de4",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/tested-once-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s6"
+    },
+    {
+      "slice": "drift 27fae97",
+      "state": "integrated 1a1410f; checks green",
+      "after": [
+        "S1"
+      ],
+      "branch": "fix/tested-once-drift",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-tested-once-drift"
+    },
+    {
+      "slice": "drift 8ff2d9a",
+      "state": "integrated c1b6101 (ff); checks green",
+      "after": [
+        "S6 slice-scope runs reusable (added)"
+      ],
+      "branch": "fix/tested-once-drift2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-tested-once-drift2"
+    }
+  ],
+  "findings": [
+    "kept: F1 simplify — remove integrate's cargo run (moves L4); assumed by the deck's 20-min default on itm_8edab381da91, not the user's press; QA builds it, gate2 names it"
+  ],
+  "next": "Gate2 itm_f416111ed048 (PR #154, 30e0e03) waits on the user's Sign off. On the press / a `lander due` line: spawn pilot-lander with the gate2 id. On `landed`: reply `Findings:` on the closing report (F1 assumed, moves L4; N3, N7 dropped; no mutation/coverage evidence). Then portable-store drifts: its co-pilot merges pilot into feat, main replans.",
+  "updatedAt": "2026-11-28T06:03:38.177Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1: suite needs PILOT_BRANCH that only gate.mjs sets, so bare node --test looked like a broken base; the drift also broke sync.mjs (removed PILOT_BRANCH export) and leaked PILOT_TEST_SCOPE into nested gates",
+      "evidence": "13 red on the rebased tree; fixes f10dab7, e99a578; two diagnosis rounds",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce hook fires on a child's interim 'waiting on its own background work' notice, forcing the co-pilot to hand back paused with a live child",
+      "evidence": "two forced hand-backs in one resume on tested-once while fixer afeb57737626c0c57 was live"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "could not resume S1 rebase implementer a8eaae4cc446e3896: no transcript found; trailers rebuilt from scratchpad copy",
+      "evidence": "co-pilot hand-back, tested-once S1"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "local full-suite spawn counts read above CI (11790/10651 local vs 11769/10627 CI on dc9ddd4), so a ceiling pinned from local+delta is loose or wrong",
+      "evidence": "S1 fix round cost runs, base-cost.log"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "two full gates at once share the Rune cargo target; the second's link fails LNK1104",
+      "evidence": "S1 fix round, merge-cost.log"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "'pilot test reuses a green tree' test takes a gate slot and waited ~9.6 min while cost runs held the slots",
+      "evidence": "S1 fix round"
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "S5 store-runs.mjs fix buys one line of headroom under the 800-line facade bar; next addition breaks it again",
+      "evidence": "store-runs.mjs 799 lines after 8dc009c",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: PILOT_TEST_SCOPE=slice set in the env for test:changed leaks into gate-cargo tests, which then fail; new slice worktree had no node_modules (npm ci first)",
+      "evidence": "S6 report, gate-cargo red under the env var",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce fired on a child's interim 'waiting on its own background work' notice again, forcing a hand-back with three children live",
+      "evidence": "tested-once successor co-pilot, drift fixer + S2 + S4 live",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce hook forced a hand-back on a child's interim 'waiting on background work' notice, with three children live; a successor had to be spawned",
+      "evidence": "co-pilot hand-back, 120k tokens, 66 tool uses"
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "store-runs.mjs at 799 of 800 line ceiling",
+      "evidence": "S5 review LOW"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "PILOT_TEST_SCOPE env leaks into the gate-cargo tests; new worktree has no node_modules",
+      "evidence": "S6 implementer report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared test slot and exact spawn ceilings cost two long full-gate runs; first gate red only on ceilings (+142 git)",
+      "evidence": "slice verification waited on 'gate: waiting for a slot' behind S5 (927 s test); gate 1 exit 1 at 12009/10855 vs 11866/10719",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate takes the base before the branch, so a drift-merge branch cannot be integrated: the base merge conflicts on what the branch resolves",
+      "evidence": "NOT integrated fix/tested-once-drift: taking base hazzardrust-pilot stopped (integrate.mjs:511); fast-forwarded feat instead"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node --test outside the gate lacks PILOT_BRANCH, so integrate tests fail 'no pilot branch name' until set by hand",
+      "evidence": "all 12 integrate tests failed until PILOT_BRANCH=pilot; one ~3 min slice run lost; both reviewers hit it",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "node --test outside the gate lacks PILOT_BRANCH; 12 integrate tests failed until PILOT_BRANCH=pilot was set by hand; reviewers could not run them",
+      "evidence": "S2 first slice-test log: 5 pass / 12 fail"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "every slice adding scratch-repo tests fails its first full gate on the spawn ceilings with 0 test failures, costing a second full run; each then re-pins gate.mjs and conflicts with its siblings",
+      "evidence": "S2 12130 > 11866; S4 12009 > 11866; drift, S2, S4 all re-pinned"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "children adopted by a successor co-pilot still hand back to main, so the pilot relays full slice reports",
+      "evidence": "a9c8e7a, ab785dd, ac7efc4 hand-backs arrived at main"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "waiting on the 5-minute-plus gate cost turns; Monitor and chained sleep unavailable",
+      "evidence": "drift2 fixer waited on background completion notices"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "nothing marks the cargo deferral machine-readably; CARGO_DEFERRED was private to gate.mjs, so the row learns of the skip only by matching gate output",
+      "evidence": "scripts/integrate.mjs:207 matches the output line"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "every slice re-pins the same two ceiling constants in scripts/gate.mjs, so each later slice conflicts and needs a rebase plus a full-gate re-measure before integrate",
+      "evidence": "S2, S4, S6, drift, drift2 each pinned SPAWN_CEILING/GIT_CEILING",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm run test:quiet over 180 s is moved to background; Monitor unavailable and sleep loop blocked, so waits are on completion notices",
+      "evidence": "S4 rebase report"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "ceiling pins in scripts/gate.mjs conflict on every rebase and every landing: each slice re-pins the same two constants and the dated list",
+      "evidence": "S2 commit 27b7761 emptied on rebase; 3 landings and 5 slices all conflicted in gate.mjs"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "co-pilot reached 152k tokens across hook-forced hand-backs and relays",
+      "evidence": "a75e5a8 usage 152739 tokens, 69 tool uses"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot relayed three full slice reports that children sent to main instead of their co-pilot",
+      "size": 9000
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "ran git checkout --detach in the S2 slice worktree it did not create, against its read-only brief; HEAD detached at the same sha 3d95a66, no content change",
+      "evidence": "its report: PROCESS ERROR BY ME",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner refused node scripts/gate.mjs for coverage (not npm test form) and the classifier refused stryker: no diff coverage or mutation measured",
+      "evidence": "fundamentalist report section 3",
+      "size": 2
+    },
+    {
+      "agent": "qa",
+      "what": "pilot gh-stub gives one reply to every call, so it cannot stub testedTrees",
+      "evidence": "QA replaced stub.cjs with one answering by args"
+    },
+    {
+      "agent": "qa",
+      "what": "Under Git Bash a C:/ path in PATH loses to the real gh",
+      "evidence": "one probe reached real gh, calls.jsonl empty; fixed with cygpath -u"
+    },
+    {
+      "agent": "qa",
+      "what": "pilot integrate in a scratch repo needs pilot.branch and a package-lock.json",
+      "evidence": "first two integrate attempts failed"
+    },
+    {
+      "agent": "co-pilot",
+      "what": "harness forced co-pilot and QA hand-backs while the fix round was live",
+      "evidence": "co-pilot handed back paused with 2 live children; QA handed back before the fix tip"
+    },
+    {
+      "agent": "fix implementer",
+      "what": "integrate-reuse.test.mjs fails 11 of 11 under plain node --test, on base too; it needs the gate's environment",
+      "evidence": "\"no pilot branch name\"; one probe plus a base run"
+    },
+    {
+      "agent": "fix implementer",
+      "what": "Glossary term count is pinned in a test, so any glossary addition trips it",
+      "evidence": "one 10-minute gate rerun (79 -> 81)"
+    },
+    {
+      "agent": "fix implementer",
+      "what": "sed -i hook refused a mutation in its own throwaway worktree",
+      "evidence": "deletion redone with Edit"
+    },
+    {
+      "agent": "qa",
+      "what": "deck_post shape rules not visible in advance: a question needs a Research: line, a walkthrough body needs a Differences: line",
+      "evidence": "two refused posts (the pilot hit the first one too)"
+    },
+    {
+      "agent": "qa",
+      "what": "A reviewer nit landing mid-gate forced a stop and rerun of the 9-minute gate",
+      "evidence": "first run stopped 02:36, rerun 9.3 min"
+    },
+    {
+      "agent": "qa",
+      "what": "Differences question assumes Reference: lines; this surface:true artefact has none",
+      "evidence": "QA compared build against plan region by region instead"
+    },
+    {
+      "agent": "qa",
+      "what": "pilot integrate --trial on a stale feat worktree prints only `trial NOT run: To <remote>` and names no cause",
+      "evidence": "feat worktree at 3c7734b vs origin 30e0e03; found with git status and log"
+    },
+    {
+      "agent": "qa",
+      "what": "gate2 shape rules are not in the tool description: pr wants #n, title is required",
+      "evidence": "two refused posts"
+    },
+    {
+      "agent": "qa",
+      "what": "Classifier gives no verdict on a call batched with another; reissued alone it runs",
+      "evidence": "QA once, pilot once this session"
+    }
+  ]
+}

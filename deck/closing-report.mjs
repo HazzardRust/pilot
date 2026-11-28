@@ -172,6 +172,19 @@ const noneRecorded = (cause) => {
 };
 
 /**
+ * The record's test runs in one line (tested-once spec 4): `test runs: <n> local, <m> min (<where> <k>, ...)`,
+ * the places most runs first, after a blank line so it never reads as a slice; none when the record holds no rows.
+ */
+function testRunsLine(tests) {
+  if (!Array.isArray(tests) || tests.length === 0) return [];
+  const counts = new Map();
+  for (const where of tests.map((row) => String(row?.where ?? 'unknown'))) counts.set(where, (counts.get(where) ?? 0) + 1);
+  const minutes = tests.reduce((sum, row) => sum + (Number.isFinite(row?.minutes) ? row.minutes : 0), 0);
+  const places = [...counts].sort(([, a], [, b]) => b - a).map(([where, k]) => `${said(where)} ${k}`);
+  return ['', `test runs: ${tests.length} local, ${Math.round(minutes * 10) / 10} min (${places.join(', ')})`];
+}
+
+/**
  * The minimal closing report (spec 4): the landing SHA, land's main line, the record's slices and
  * their PRs, the run's worktrees `left` on disk, and the record's friction ranked. Built from the record,
  * the gate2's landing and `left`; it asks nothing (report-shape, ADR 0148). `left` not a list is a git
@@ -192,6 +205,7 @@ export function closingReportOf(record, gate, left, closes = [], blocked = block
     '',
     'Slices:',
     ...list(rows.map((row) => `${said(row.slice)}${row.pr ? ` (#${row.pr})` : ''}`), 'none recorded'),
+    ...testRunsLine(record?.tests),
     '',
     // What is on disk when the report posts (lander-tail spec 5, L7), never land's earlier `kept` lines.
     'Worktrees left:',
