@@ -15,6 +15,7 @@
  * under `deck/`, and the exit code it answers with is this process's.
  */
 
+import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
@@ -62,6 +63,7 @@ import { main as listProcesses, processTable } from '../deck/procs.mjs';
 import { main as collectGarbage, deckPidNow, landSweep } from '../deck/gc.mjs';
 import { main as doctor, slugsWarning } from '../deck/doctor.mjs';
 import { main as restoreStore } from '../deck/store-restore.mjs';
+import { exportStore } from '../deck/store-move.mjs';
 import { main as waitForReply } from '../deck/wait.mjs';
 import { main as waitForFile } from '../deck/wait-for.mjs';
 import { openPilot } from '../deck/session.mjs';
@@ -231,6 +233,13 @@ const usage = () => `pilot — the deck for piloted runs
   pilot store restore
                  with the deck stopped: swap deck.json and deck.json.bak, keeping the
                  replaced store as deck.json.replaced-<date>; run it again to undo it
+  pilot store export [<file>] [--logs]
+                 write the store's portable part to one bundle (default
+                 pilot-store-<host>-<yyyy-mm-dd>.pilotstore here), never machine.json,
+                 deck.secret, deck.pid or a backup; --logs adds the deck's logs, as written,
+                 whatever they hold; threads travel as written too. Then list
+                 each open run's worktree with work on no remote, and landings in flight;
+                 exit 0 once written, whatever the list says
   pilot doctor   on Windows, whether Defender's real-time scan sits in front of the projects
                  root (the repository's parent): off, on a Dev Drive in performance mode,
                  excluded, not, or cannot tell without an administrator, and the admin step
@@ -593,6 +602,16 @@ export async function run(argv, deps) {
 
   if (command === 'store' && flag === 'restore') {
     process.exitCode = await restoreStore(argv.slice(2));
+    return undefined;
+  }
+
+  if (command === 'store' && flag === 'export') {
+    // git by argv, never a shell (portable-store S4); passed in, since a store module starts no process (ADR 0039).
+    const git = (args, cwd) => {
+      const run = spawnSync('git', args, { cwd, encoding: 'utf8', windowsHide: true, timeout: 30_000 });
+      return { status: run.status, stdout: run.stdout ?? '', stderr: run.stderr || run.error?.message || '' };
+    };
+    process.exitCode = exportStore(argv.slice(2), { git });
     return undefined;
   }
 
