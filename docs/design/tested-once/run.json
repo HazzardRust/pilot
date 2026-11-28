@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed 3d95a66; ts approve, security approve on final diff; waiting on checks of 8244a99 to integrate",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -48,7 +48,7 @@
     },
     {
       "slice": "feature",
-      "state": "implementing: S2 left, then principles review, QA",
+      "state": "gate2 itm_f416111ed048 posted at 30e0e03: trial clean on hazzardrust-pilot, checks green; walkthrough signed",
       "after": [
         "S1",
         "S2",
@@ -56,7 +56,8 @@
         "S4",
         "S5"
       ],
-      "branch": "feat/tested-once"
+      "branch": "feat/tested-once",
+      "pr": 154
     },
     {
       "slice": "S6 slice-scope runs reusable (added)",
@@ -87,89 +88,11 @@
     }
   ],
   "findings": [
-    "kept: S2-sec-MEDIUM needed-fix — built in S2 3d95a66 (integrate.mjs:570 runs cargo alone on a reused cargo-skipped row); itm_39627d090944 default assumed by deck",
-    "kept: S1-sec-MEDIUM needed-fix — built in S2 3d95a66 as F2 (test command in the reuse key)"
+    "kept: F1 simplify — remove integrate's cargo run (moves L4); assumed by the deck's 20-min default on itm_8edab381da91, not the user's press; QA builds it, gate2 names it"
   ],
-  "next": "wait checks on 8244a99; then pilot integrate S2 3d95a66 with ts+security approve; checks; fundamentalist",
-  "updatedAt": "2026-11-28T01:42:13.737Z",
+  "next": "Gate2 itm_f416111ed048 (PR #154, 30e0e03) waits on the user's Sign off. On the press / a `lander due` line: spawn pilot-lander with the gate2 id. On `landed`: reply `Findings:` on the closing report (F1 assumed, moves L4; N3, N7 dropped; no mutation/coverage evidence). Then portable-store drifts: its co-pilot merges pilot into feat, main replans.",
+  "updatedAt": "2026-11-28T06:03:38.177Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "TaskStop on a background test run leaves its node children; the next gate overlapped them: one 9-minute red run, 582 fails; quiet reporter prints no failure reason",
-      "evidence": "waiting for a slot: pid 816; stopped 29948 test",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "forced hand-back with two implementers live, before any report",
-      "evidence": "tested-once co-pilot hand-back, handback-send-enforce",
-      "size": 2
-    },
-    {
-      "kind": "drain",
-      "what": "four forced co-pilot hand-backs this session; each child's report came to main and was relayed by hand; evidence rows saved to scratchpad files because the record's cells cap at 400 chars",
-      "size": 25
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "400-line limit counts the ADR and tests: three trim passes, reviewer-asked tests squeezed out; undocumented platform-reads guard cost a 7-minute red run",
-      "evidence": "424, 401, 409, 399; only the seam reads process.platform",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-architect",
-      "what": "A6 and L4 conflict found only at build: slice-scope runs always say deferred, so they are never reusable",
-      "evidence": "S1 pushback 1; S3 B3 row deferred: cargo",
-      "size": 4
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S5: store-runs.mjs sat 1 line under the 800-line deck facade bar only the full suite enforces; a gate run plus a refactor into deck/runs.mjs",
-      "evidence": "facades.test.mjs: store-runs.mjs 819 > 800",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-fact-sheet",
-      "what": "reported testRunsFor not found; it is at scripts/test-ledger.mjs:101",
-      "evidence": "S5 implementer report",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S4: three parallel slice gates queue on the machine's test slot; S4's full gate never got a slot before the pause",
-      "evidence": "gate: waiting for a slot behind pids 13520, 11136",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "pilot-qa prompt pin 5264 has 0.75 headroom; three wording trims to add the L2 scratch-home line",
-      "evidence": "measure-prompt 5263.25 vs 5264",
-      "size": 1
-    },
-    {
-      "agent": "pilot:typescript-reviewer",
-      "what": "S2 ts-reviewer handed back findings without a Verdict line; a follow-up ask was refused after its report, so a second review was spawned",
-      "evidence": "S2 implementer report: Verdict lines, ts: none",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S2: gh-stub fails once HOME points at a scratch dir; Git Bash mktemp paths need cygpath -m for node; tests under load 373-398 s",
-      "evidence": "plugin is not installed",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S2: the brief named no trailer and the session's attribution differs from brief.md's, so the first commit was redone",
-      "evidence": "S2 report: reset --soft HEAD~1, recommitted with brief.md trailer",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "spawn pins in gate.mjs are exact, so each drift merge costs a red CI round trip to learn the count; the fixer also took the session's trailer, not brief.md's",
-      "evidence": "Gate run 45992689173: spawns 11769 over 11758; dc9ddd4 trailer",
-      "size": 2
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S1: suite needs PILOT_BRANCH that only gate.mjs sets, so bare node --test looked like a broken base; the drift also broke sync.mjs (removed PILOT_BRANCH export) and leaked PILOT_TEST_SCOPE into nested gates",
@@ -307,6 +230,77 @@
       "what": "ran git checkout --detach in the S2 slice worktree it did not create, against its read-only brief; HEAD detached at the same sha 3d95a66, no content change",
       "evidence": "its report: PROCESS ERROR BY ME",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner refused node scripts/gate.mjs for coverage (not npm test form) and the classifier refused stryker: no diff coverage or mutation measured",
+      "evidence": "fundamentalist report section 3",
+      "size": 2
+    },
+    {
+      "agent": "qa",
+      "what": "pilot gh-stub gives one reply to every call, so it cannot stub testedTrees",
+      "evidence": "QA replaced stub.cjs with one answering by args"
+    },
+    {
+      "agent": "qa",
+      "what": "Under Git Bash a C:/ path in PATH loses to the real gh",
+      "evidence": "one probe reached real gh, calls.jsonl empty; fixed with cygpath -u"
+    },
+    {
+      "agent": "qa",
+      "what": "pilot integrate in a scratch repo needs pilot.branch and a package-lock.json",
+      "evidence": "first two integrate attempts failed"
+    },
+    {
+      "agent": "co-pilot",
+      "what": "harness forced co-pilot and QA hand-backs while the fix round was live",
+      "evidence": "co-pilot handed back paused with 2 live children; QA handed back before the fix tip"
+    },
+    {
+      "agent": "fix implementer",
+      "what": "integrate-reuse.test.mjs fails 11 of 11 under plain node --test, on base too; it needs the gate's environment",
+      "evidence": "\"no pilot branch name\"; one probe plus a base run"
+    },
+    {
+      "agent": "fix implementer",
+      "what": "Glossary term count is pinned in a test, so any glossary addition trips it",
+      "evidence": "one 10-minute gate rerun (79 -> 81)"
+    },
+    {
+      "agent": "fix implementer",
+      "what": "sed -i hook refused a mutation in its own throwaway worktree",
+      "evidence": "deletion redone with Edit"
+    },
+    {
+      "agent": "qa",
+      "what": "deck_post shape rules not visible in advance: a question needs a Research: line, a walkthrough body needs a Differences: line",
+      "evidence": "two refused posts (the pilot hit the first one too)"
+    },
+    {
+      "agent": "qa",
+      "what": "A reviewer nit landing mid-gate forced a stop and rerun of the 9-minute gate",
+      "evidence": "first run stopped 02:36, rerun 9.3 min"
+    },
+    {
+      "agent": "qa",
+      "what": "Differences question assumes Reference: lines; this surface:true artefact has none",
+      "evidence": "QA compared build against plan region by region instead"
+    },
+    {
+      "agent": "qa",
+      "what": "pilot integrate --trial on a stale feat worktree prints only `trial NOT run: To <remote>` and names no cause",
+      "evidence": "feat worktree at 3c7734b vs origin 30e0e03; found with git status and log"
+    },
+    {
+      "agent": "qa",
+      "what": "gate2 shape rules are not in the tool description: pr wants #n, title is required",
+      "evidence": "two refused posts"
+    },
+    {
+      "agent": "qa",
+      "what": "Classifier gives no verdict on a call batched with another; reissued alone it runs",
+      "evidence": "QA once, pilot once this session"
     }
   ]
 }
