@@ -76,6 +76,18 @@ test('an argv overflow at slice scope runs the direct and tree tests and defers 
   assert.equal(selectTests({ cwd: dir, since: 'HEAD' }).files, null);
 });
 
+test('a slice-scope overflow still over the limit runs the full suite', (t) => {
+  const { dir } = gitFixture(t, 'scope:repo', REPO);
+  // 400 tests import lib/used.mjs directly, so keeping only the nearest ones is still over the limit.
+  for (let i = 0; i < 400; i++) write(dir, `test/${'b'.repeat(80)}${i}.test.mjs`, "import '../lib/used.mjs';\n");
+  git(dir, 'add', '.');
+  git(dir, 'commit', '-q', '-m', 'many direct');
+  fs.appendFileSync(path.join(dir, 'lib/used.mjs'), 'export const v = 2;\n');
+  const slice = selectTests({ cwd: dir, since: 'HEAD', scope: 'slice' });
+  assert.equal(slice.files, null);
+  assert.match(slice.reason, /^selection is \d+ characters of argv, over 24000$/);
+});
+
 const SHA = '0123456789abcdef0123456789abcdef01234567';
 const LOCAL = { LOCALAPPDATA: 'C:\\Users\\me\\AppData\\Local' };
 const CARGO = 'C:\\Users\\me\\.cargo\\bin\\cargo.exe';
@@ -96,8 +108,6 @@ test('the scope line says what was deferred', () => {
   const line = scopeLine(selection);
   assert.equal(line, 'selected 3 of 400 test files since abc1234; deferred: x.mjs reaches no test');
   assert.equal(scopeOf(`ledgers current\n${line}\nℹ tests 3\n`), line);
-  const two = scopeLine({ ...selection, deferred: ['package.json changed', 'cargo'] });
-  assert.equal(two, 'selected 3 of 400 test files since abc1234; deferred: package.json changed, cargo');
   assert.equal(scopeLine({ files: ['a'], total: 4, since: 'abc1234def' }), 'selected 1 of 4 test files since abc1234', 'nothing deferred, nothing added');
 });
 
@@ -157,6 +167,7 @@ test('a slice-scope gate with a lonely file still says deferred', (t) => {
 // F1 of S2's review: the row says cargo was skipped, apart from the scope line, so integrate runs it.
 test('a slice-scope run with no --since writes the cargo-skipped field', async (t) => {
   const { runTests } = await import('../integrate.mjs');
+  const { testRunsFor } = await import('../test-ledger.mjs');
   const runs = {
     'no --since': sliceGate(t, undefined, []),
     'an empty selection': sliceGate(t, { ...selected(['deck/view.mjs']), files: [] }),
@@ -170,7 +181,8 @@ test('a slice-scope run with no --since writes the cargo-skipped field', async (
     fs.writeFileSync(path.join(dir, 'replay.cjs'), "process.stdout.write(require('fs').readFileSync(__dirname + '/out.txt', 'utf8'));\n");
     const home = path.join(dir, 'home');
     assert.equal(runTests(dir, 'node replay.cjs', { label: 'slice', where: 'implementer', home, slot: false }).status, 0, name);
-    const [row] = fs.readFileSync(path.join(home, '.claude', 'pilot', 'tests', 'ledger.jsonl'), 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+    // No repository, no branch: the row's slug is null.
+    const [row] = testRunsFor({ slug: null, home });
     assert.equal(row.cargo, 'skipped', `${name}: ${text}`);
     assert.equal(row.command, 'node replay.cjs', name);
   }

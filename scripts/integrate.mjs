@@ -54,8 +54,7 @@ import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-gene
 import { assertPushable, firstLine, git, isPilotBase, isPilotName, landingSubjects, pilotBranch, pilotLineage, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRef, runRemote, shortRef } from './remotes.mjs';
 import { CARGO_DEFERRED, scopeOf } from './select-tests.mjs';
-import { headOf, nodeMajor, recordRun, reusableRun, worktreeTree } from './test-ledger.mjs';
-import { hostPlatform } from '../hooks/lib/platform.js';
+import { headOf, ledgerHome, recordRun, reusableRun, worktreeTree } from './test-ledger.mjs';
 import { holderFrom, runRecord } from './worktrees.mjs';
 
 const RECORDS = ':(glob)docs/design/*/run.json';
@@ -170,11 +169,11 @@ function countsOf(output) {
  * written unless `home` is passed (L8). `minutes` is the run's wall time.
  */
 export function runTests(cwd, test, { label = 'tests', where = 'tests', branch, since = null, home, tree, slots = {}, slot: inSlot = true } = {}) {
-  const ledgerHome = home ?? (process.env.PILOT_GATE_HOME_STORE ? null : os.homedir());
+  const ledger = ledgerHome(home);
   home ??= os.homedir();
   // The tree, sha and branch the run starts on, read before it can move them; `tree` is a caller's that just read it.
   let start = null;
-  if (ledgerHome !== null) {
+  if (ledger !== null) {
     const taken = tree !== undefined ? tree : worktreeTree(cwd);
     // No work tree, no HEAD to ask git about.
     start = { tree: taken, ...(taken === null ? { sha: null, branch: null } : headOf(cwd)) };
@@ -203,9 +202,9 @@ export function runTests(cwd, test, { label = 'tests', where = 'tests', branch, 
   const scope = scopeOf(output);
   if (start !== null) {
     recordRun({
-      at: new Date().toISOString(), where, branch: branch ?? start.branch, slug: null, sha: start.sha, tree: start.tree, since, scope,
-      command: test, cargo: output.split(/\r?\n/).some((line) => line.endsWith(CARGO_DEFERRED)) ? 'skipped' : null, exit: status, minutes, platform: hostPlatform(), node: nodeMajor(),
-    }, { home: ledgerHome });
+      where, branch: branch ?? start.branch, sha: start.sha, tree: start.tree, since, scope,
+      command: test, cargo: output.split(/\r?\n/).some((line) => line.endsWith(CARGO_DEFERRED)) ? 'skipped' : null, exit: status, minutes,
+    }, { home: ledger });
   }
   if (status === 0) fs.rmSync(log, { force: true });
   return { status, counts: countsOf(output), failing: failingNames(output), log, scope, minutes };
@@ -259,27 +258,28 @@ export const NO_TEST = 'no package.json here; set git config pilot.test "<comman
 /**
  * `runTests` on the injected `test` as given, in a slot; absent, on the repository's own command
  * since `since`, the tip before the merge (suite-at-landing L4), a selection taking no slot (L9).
+ * `tree` is the one `provenRun` just read, so `runTests` does not hash the worktree again.
  */
-function runChosen(cwd, test, since, label, home) {
+function runChosen(cwd, test, since, label, home, tree) {
   const chosen = test === undefined ? testCommand(cwd, { since }) : { command: test, selected: false };
   if (chosen === undefined) throw new Error(NO_TEST);
   // An injected command's row says `injected`, a since no request names, so it is never reused.
-  return runTests(cwd, chosen.command, { label, where: 'integrate', since: test !== undefined ? 'injected' : chosen.selected ? since : null, home, slot: !chosen.selected });
+  return runTests(cwd, chosen.command, { label, where: 'integrate', since: test !== undefined ? 'injected' : chosen.selected ? since : null, home, tree, slot: !chosen.selected });
 }
 
 /**
- * The ledger row (`reusableRun`; tested-once L3, L4) that proves the merge in hand green: the
- * latest green, complete row for its exact tree since `since`, the tip before the merge; else null.
- * An injected `test` always runs. Inside the suite an unpassed `home` reads no ledger, as `runTests`
- * writes none (L8).
+ * `{ row, tree }`: the ledger row (`reusableRun`; tested-once L3, L4) that proves the merge in hand
+ * green, the latest green, complete row for its exact tree since `since`, the tip before the merge,
+ * else null; and the tree it read, undefined where it read none. An injected `test` always runs.
+ * Inside the suite an unpassed `home` reads no ledger, as `runTests` writes none (L8).
  */
 function provenRun(cwd, test, since, home) {
-  if (test !== undefined) return null;
-  const ledgerHome = home ?? (process.env.PILOT_GATE_HOME_STORE ? null : os.homedir());
-  if (ledgerHome === null) return null;
-  const row = reusableRun({ tree: worktreeTree(cwd), since, home: ledgerHome, command: testCommand(cwd, { since })?.command, runsCargo: true });
+  const ledger = ledgerHome(home);
+  if (test !== undefined || ledger === null) return { row: null, tree: undefined };
+  const tree = worktreeTree(cwd);
+  const row = reusableRun({ tree, since, home: ledger, command: testCommand(cwd, { since })?.command, runsCargo: true });
   // A row that skipped cargo stands only where integrate can run cargo alone (S2's F1).
-  return row?.cargo === 'skipped' && cargoCommand(cwd) === undefined ? null : row;
+  return { row: row?.cargo === 'skipped' && cargoCommand(cwd) === undefined ? null : row, tree };
 }
 
 /** The repository's cargo-only command, `npm run test:cargo`, or undefined where package.json has no such script. */
@@ -565,8 +565,9 @@ export function integrate(branch, options = {}) {
   let run;
   let reused;
   try {
-    reused = provenRun(cwd, test, start, home);
-    if (!reused) run = runChosen(cwd, test, start, merged, home);
+    const proven = provenRun(cwd, test, start, home);
+    reused = proven.row;
+    if (!reused) run = runChosen(cwd, test, start, merged, home, proven.tree);
     // The node selection is proved; the cargo step it skipped runs here. Its row's since names no request, so it is never reused.
     else if (reused.cargo === 'skipped') run = runTests(cwd, cargoCommand(cwd), { label: merged, where: 'integrate', since: 'cargo', home });
     if (run) view.forget(); // the test command is git's to touch too, outside the view (L3)

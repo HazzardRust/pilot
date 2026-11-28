@@ -45,9 +45,7 @@ const rowsOf = (home) => fs.readFileSync(ledgerOf(home), 'utf8').trim().split('\
 /** A row as `runTests` writes it at commit `sha` on worktree `tree`, `over` laid on top. */
 function row({ sha, tree }, over = {}) {
   return {
-    at: new Date().toISOString(), where: 'implementer', branch: 'slice/demo-s1', slug: null, sha,
-    tree, since: null, scope: null, command: CMD, cargo: null, exit: 0, minutes: 0.01, platform: process.platform,
-    node: Number(process.versions.node.split('.')[0]), ...over,
+    where: 'implementer', branch: 'slice/demo-s1', sha, tree, since: null, scope: null, command: CMD, cargo: null, exit: 0, minutes: 0.01, ...over,
   };
 }
 
@@ -103,10 +101,13 @@ test('reuse is the exact tree', (t) => {
   const changed = worktreeTree(cwd);
   assert.equal(reusableRun({ tree: changed, since, home, command: CMD }), null);
   const other = tmp(t, 'other');
-  recordRun(row({ sha, tree: changed }, { platform: process.platform === 'win32' ? 'linux' : 'win32' }), { home: other });
-  assert.equal(reusableRun({ tree: changed, since, home: other, command: CMD }), null);
-  recordRun(row({ sha, tree: changed }, { node: Number(process.versions.node.split('.')[0]) - 1 }), { home: other });
-  assert.equal(reusableRun({ tree: changed, since, home: other, command: CMD }), null);
+  // recordRun stamps this process's platform and node over a caller's, so another's row is written as it would land.
+  recordRun(row({ sha, tree: changed }, { platform: 'elsewhere', node: 0 }), { home: other });
+  const [mine] = rowsOf(other);
+  assert.deepEqual([mine.platform, mine.node, mine.slug], [process.platform, Number(process.versions.node.split('.')[0]), 'demo']);
+  fs.writeFileSync(ledgerOf(other), [{ platform: process.platform === 'win32' ? 'linux' : 'win32' }, { node: mine.node - 1 }]
+    .map((over) => JSON.stringify({ ...mine, ...over })).join('\n') + '\n');
+  assert.equal(reusableRun({ tree: changed, since, home: other, command: CMD }), null, 'another platform or node is not this run');
   recordRun(row({ sha, tree: changed }), { home: other });
   assert.ok(reusableRun({ tree: changed, since, home: other, command: CMD }), 'a full row stands for any since');
   assert.deepEqual([testRunsFor({ slug: 'demo', home: other }).length, testRunsFor({ slug: 'else', home: other }).length], [3, 0]);

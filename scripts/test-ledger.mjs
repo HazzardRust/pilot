@@ -16,10 +16,13 @@ import { hostPlatform } from '../hooks/lib/platform.js';
 const RECORDS = ':(glob)docs/design/*/run.json';
 
 /** The ledger file under `home`. */
-export const ledgerPath = (home) => path.join(home, '.claude', 'pilot', 'tests', 'ledger.jsonl');
+const ledgerPath = (home) => path.join(home, '.claude', 'pilot', 'tests', 'ledger.jsonl');
 
 /** This process's node major, the `node` of every row it writes and reads. */
-export const nodeMajor = () => Number(process.versions.node.split('.')[0]);
+const nodeMajor = () => Number(process.versions.node.split('.')[0]);
+
+/** The home whose ledger a run reads and writes: `home` as passed; else none inside the suite (`PILOT_GATE_HOME_STORE` set; L8), the user's own outside it. */
+export const ledgerHome = (home) => home ?? (process.env.PILOT_GATE_HOME_STORE ? null : os.homedir());
 
 const gitIn = (cwd, args, env = process.env) => execFileSync('git', args, { cwd, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true }).trim();
 
@@ -59,17 +62,22 @@ export function worktreeTree(cwd) {
 }
 
 /** The feature slug a branch belongs to: `feat/<slug>`, `slice/<slug>-s<n>`, `fix/<slug>-s<n>`, `qa/<slug>`; else null. */
-export function slugOf(branch) {
+function slugOf(branch) {
   const match = /^(feat|slice|fix|qa)\/(.+)$/.exec(String(branch ?? ''));
   if (!match) return null;
   return match[1] === 'slice' || match[1] === 'fix' ? match[2].replace(/-s\d+\w*$/, '') : match[2];
 }
 
-/** Appends `row` as one line, its `slug` from its branch, to the ledger under `home` (0600 on create). */
+/**
+ * Appends `row` as one line to the ledger under `home` (0600 on create), stamped by this process over
+ * whatever `row` carries: `at` now, `slug` from its branch, and the `platform` and `node` `reusableRun`
+ * matches, so a row's identity is its writer's, never its caller's.
+ */
 export function recordRun(row, { home }) {
   const file = ledgerPath(home);
   privateDir(path.dirname(file));
-  fs.appendFileSync(file, `${JSON.stringify({ ...row, slug: slugOf(row.branch) })}\n`, { mode: 0o600 });
+  const stamped = { ...row, at: new Date().toISOString(), slug: slugOf(row.branch), platform: hostPlatform(), node: nodeMajor() };
+  fs.appendFileSync(file, `${JSON.stringify(stamped)}\n`, { mode: 0o600 });
 }
 
 /** Every well-formed row of the ledger under `home`, oldest first; an unreadable line is skipped. */

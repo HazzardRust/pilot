@@ -95,12 +95,13 @@ const POLL_MS = 1_000;
  * 2026-11-28, remote-run-branches landing merge on 27fae97: 11968 (node 845, git 10828, other 295) locally + Windows-CI delta 9/6, 11977 / 10834; both features' tests, the final exact pins.
  * 2026-11-28, tested-once drift merge on 27fae97: 11996 (node 845, git 10852, other 299) locally + Windows-CI delta 9/6, 12005 / 10858; tested-once's S1-S3 on classifier-env's and prune-run-trees' exact pins (+101 / +94 over the base 11900 / 10758); temporary until tested-once's last slice re-pins.
  * 2026-11-28, tested-once drift merge on 8ff2d9a: 12070 (node 845, git 10925, other 300) locally + Windows-CI delta 9/6, 12079 / 10931; temporary until tested-once's last slice re-pins.
- * 2026-11-28, tested-once S4 on 2d1c7c8: 12222 (node 845, git 11067, other 310) locally + Windows-CI delta 9/6, 12231 / 11073; S4's CI-reuse tests (test-cli-reuse) on S1, S3, S5, S6 and three base drift merges; the final pins.
- * 2026-11-28, tested-once S2 on a0b2e86: 12666 (node 845, git 11472, other 349) locally + Windows-CI delta 9/6, 12675 / 11478; S2's integrate-reuse (nine scratch-origin integrates, 390), the cargo-mark tests and QA's cargo-only reuse on S4's pins; the final pins.
+ * 2026-11-28, tested-once S4 on 2d1c7c8: 12222 (node 845, git 11067, other 310) locally + Windows-CI delta 9/6, 12231 / 11073; S4's CI-reuse tests (test-cli-reuse) on S1, S3, S5, S6 and three base drift merges; S4's pins, superseded by S2's below.
+ * 2026-11-28, tested-once S2 on a0b2e86: 12666 (node 845, git 11472, other 349) locally + Windows-CI delta 9/6, 12675 / 11478; S2's integrate-reuse (nine scratch-origin integrates, 390), the cargo-mark tests and QA's cargo-only reuse on S4's pins; S2's pins, superseded by the fix round's below.
+ * 2026-11-28, tested-once fix round on 3c7734b: 12664 (node 844, git 11471, other 349) locally + Windows-CI delta 9/6, 12673 / 11477; QA's cargo-only reuse and its test gone, one tree read on integrate's miss path, one overflow test.
  */
-export const SPAWN_CEILING = 12675;
+export const SPAWN_CEILING = 12673;
 /** The most git processes a full suite may start (land-batching S7, S6, test-body-git S13, prune-worktrees, prune-run-trees, remote-run-branches); see the dated lines above. */
-export const GIT_CEILING = 11478;
+export const GIT_CEILING = 11477;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 

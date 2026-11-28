@@ -108,25 +108,17 @@ test('an integrate row does not stand for QA', (t) => {
 
 /** A green row for `repo`'s tree since pilot, of QA's own selection, whose gate deferred cargo (S2's F1). */
 const cargoSkipped = (repo) => recordRun({
-  at: new Date().toISOString(), where: 'implementer', branch: 'feat/demo', sha: git(repo.cwd, 'rev-parse', 'HEAD'), tree: worktreeTree(repo.cwd),
+  where: 'implementer', branch: 'feat/demo', sha: git(repo.cwd, 'rev-parse', 'HEAD'), tree: worktreeTree(repo.cwd),
   since: repo.pilot, scope: null, command: `npm run test:changed -- --since=${repo.pilot}`, cargo: 'skipped', exit: 0, minutes: 0.01,
-  platform: process.platform, node: Number(process.versions.node.split('.')[0]),
 }, { home: repo.home });
 
-test('QA over a row that skipped cargo runs cargo once and the selection never', (t) => {
-  const repo = feature(t, { cargo: true });
-  cargoSkipped(repo);
-  const out = [];
-  assert.equal(qa(repo, hostOf(repo.cwd, []), out), 0);
-  assert.deepEqual(repo.runs(), [['cargo']], 'cargo alone, once');
-  assert.match(out.at(-1), /^tests reused: implementer [0-9a-f]{7}; cargo /);
-});
-
-test('QA does not reuse a row that skipped cargo where there is no test:cargo', (t) => {
-  const repo = feature(t);
-  cargoSkipped(repo);
-  assert.equal(qa(repo, hostOf(repo.cwd, []), []), 0);
-  assert.deepEqual(repo.runs(), [[`--since=${repo.pilot}`]], 'no cargo-only command: the selection runs');
+test('QA does not reuse a row that skipped cargo, test:cargo or none', (t) => {
+  for (const cargo of [true, false]) {
+    const repo = feature(t, { cargo });
+    cargoSkipped(repo);
+    assert.equal(qa(repo, hostOf(repo.cwd, []), []), 0);
+    assert.deepEqual(repo.runs(), [[`--since=${repo.pilot}`]], `test:cargo ${cargo}: the selection runs, cargo alone never`);
+  }
 });
 
 test('inside the suite with no home, no ledger is read', (t) => {

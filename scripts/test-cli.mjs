@@ -6,12 +6,11 @@
  */
 
 import { execFileSync, spawnSync } from 'node:child_process';
-import os from 'node:os';
 
 import { hostFor } from '../deck/host.mjs';
 import { provenTree } from './checks.mjs';
-import { cargoCommand, NO_TEST, runTests, testCommand } from './integrate.mjs';
-import { reusableRun, worktreeTree } from './test-ledger.mjs';
+import { NO_TEST, runTests, testCommand } from './integrate.mjs';
+import { ledgerHome, reusableRun, worktreeTree } from './test-ledger.mjs';
 
 /** QA reuses CI's proof of the tip (L6, A3); false makes QA ledger-only. */
 export const CI_REUSE = true;
@@ -75,26 +74,12 @@ export function testCli(argv, { cwd = process.cwd(), home, host, print = console
     return 2;
   }
   const tree = worktreeTree(cwd);
-  const ledgerHome = home ?? (process.env.PILOT_GATE_HOME_STORE ? null : os.homedir());
-  // QA takes a row that skipped cargo for the node part only where it can run cargo alone, as integrate does (S2's F1).
-  const cargo = opts.as === 'qa' ? cargoCommand(cwd) : undefined;
-  const reused = ledgerHome === null ? null : reusableRun({
-    tree, since: since ?? null, home: ledgerHome, scope: opts.scope, command: chosen.command, runsCargo: cargo !== undefined,
-  });
+  const ledger = ledgerHome(home);
+  // Only integrate runs cargo alone, so only it takes a row that skipped cargo (L4); a slice scope takes any.
+  const reused = ledger === null ? null : reusableRun({ tree, since: since ?? null, home: ledger, scope: opts.scope, command: chosen.command });
   if (reused) {
-    const proof = `tests reused: ${reused.where} ${String(reused.sha ?? reused.tree).slice(0, 7)}`;
-    if (reused.cargo !== 'skipped' || opts.scope === 'slice') {
-      print(proof);
-      return 0;
-    }
-    // Its row's since names no request, so it is never reused.
-    const run = runTests(cwd, cargo, { label: `test-${opts.as}-cargo`, where: opts.as, since: 'cargo', home, tree });
-    if (run.status === 0) {
-      print(`${proof}; cargo ${run.counts ?? 'exit 0'}; ${run.minutes} min`);
-      return 0;
-    }
-    print(`tests red: cargo ${run.counts ?? `exit ${run.status}`}; ${run.minutes} min; log ${run.log}`);
-    return typeof run.status === 'number' ? run.status : 1;
+    print(`tests reused: ${reused.where} ${String(reused.sha ?? reused.tree).slice(0, 7)}`);
+    return 0;
   }
   if (CI_REUSE && opts.as === 'qa' && since !== undefined) {
     const proof = ciProof(cwd, host, since);

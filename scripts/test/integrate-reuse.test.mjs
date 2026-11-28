@@ -17,7 +17,7 @@ import path from 'node:path';
 
 const { integrate, runTests } = await import('../integrate.mjs');
 const { githubHost } = await import('../../deck/host-github.mjs');
-const { recordRun } = await import('../test-ledger.mjs');
+const { recordRun, testRunsFor } = await import('../test-ledger.mjs');
 const { testCli } = await import('../test-cli.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true }).trim();
@@ -88,7 +88,16 @@ function gate({ slice, work, home }, command) {
   return runTests(slice, command ?? `npm run test:changed -- --since=${since}`, { label: 'gate', where: 'implementer', since, home, slot: false });
 }
 
-const ledgerRows = (home) => fs.readFileSync(path.join(home, '.claude', 'pilot', 'tests', 'ledger.jsonl'), 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+/** The rows of slice/a's feature, `a`, as the ledger answers them. */
+const ledgerRows = (home) => testRunsFor({ slug: 'a', home });
+
+/** A fresh scratch home whose ledger holds `row` alone, as `recordRun` writes it. */
+function homeWith(t, row) {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-integrate-reuse-home-'));
+  t.after(() => fs.rmSync(home, { recursive: true, force: true }));
+  recordRun(row, { home });
+  return home;
+}
 
 const gh = (args) => (args[0] === 'pr' && args[1] === 'view' ? JSON.stringify({ mergeable: 'MERGEABLE' }) : args[0] === 'pr' ? '[]' : 'me\n');
 const quiet = { install: () => {}, host: githubHost(gh) };
@@ -134,11 +143,10 @@ test('a red or deferred row runs', async (t) => {
     const s = setup(t);
     assert.equal(gate(s).status, 0);
     const [green] = ledgerRows(s.home);
-    fs.rmSync(path.join(s.home, '.claude', 'pilot', 'tests', 'ledger.jsonl'));
-    recordRun({ ...green, scope: 'selected 1 of 2 test files; 1 deferred to integrate' }, { home: s.home });
+    const home = homeWith(t, { ...green, scope: 'selected 1 of 2 test files; 1 deferred to integrate' });
     s.reset();
 
-    const result = integrate('slice/a', { cwd: s.work, home: s.home, ...quiet });
+    const result = integrate('slice/a', { cwd: s.work, home, ...quiet });
 
     assert.equal(result.ok, true, result.line);
     assert.equal(s.runs(), 1);
@@ -150,18 +158,17 @@ test('a slice-scope run reuses a deferred slice row; integrate does not', (t) =>
   const s = setup(t);
   assert.equal(gate(s).status, 0);
   const [green] = ledgerRows(s.home);
-  fs.rmSync(path.join(s.home, '.claude', 'pilot', 'tests', 'ledger.jsonl'));
-  recordRun({ ...green, scope: 'selected 1 of 2 test files; deferred: cargo' }, { home: s.home });
+  const home = homeWith(t, { ...green, scope: 'selected 1 of 2 test files; deferred: cargo' });
   s.reset();
   const printed = [];
 
-  const status = testCli(['--as', 'implementer', '--scope', 'slice', '--since', green.since], { cwd: s.slice, home: s.home, print: (line) => printed.push(line) });
+  const status = testCli(['--as', 'implementer', '--scope', 'slice', '--since', green.since], { cwd: s.slice, home, print: (line) => printed.push(line) });
 
   assert.equal(status, 0, printed.join('\n'));
   assert.equal(s.runs(), 0, 'the slice-scope run starts no test process');
   assert.match(printed.join('\n'), /^tests reused: implementer [0-9a-f]{7}$/);
 
-  const result = integrate('slice/a', { cwd: s.work, home: s.home, ...quiet });
+  const result = integrate('slice/a', { cwd: s.work, home, ...quiet });
 
   assert.equal(result.ok, true, result.line);
   assert.equal(s.runs(), 1, 'integrate runs the tests a deferred row left out');
