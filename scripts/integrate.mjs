@@ -53,7 +53,8 @@ import { mergeIntoPilot } from './sync.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
 import { assertPushable, firstLine, git, isPilotBase, isPilotName, landingSubjects, pilotBranch, pilotLineage, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRef, runRemote, shortRef } from './remotes.mjs';
-import { scopeOf } from './select-tests.mjs';
+import { CARGO_DEFERRED, scopeOf } from './select-tests.mjs';
+import { headOf, ledgerHome, recordRun, reusableRun, worktreeTree } from './test-ledger.mjs';
 import { holderFrom, runRecord } from './worktrees.mjs';
 
 const RECORDS = ':(glob)docs/design/*/run.json';
@@ -160,8 +161,23 @@ function countsOf(output) {
  * L8), freed red, green or thrown; `slots` goes to `takeSlot` (a test's lock directory). `slot`
  * false, for a selecting command, takes none and sets no `PILOT_GATE_SLOT`, so a gate inside
  * that falls back to the full suite takes its own (suite-at-landing L9).
+ *
+ * Once the process has exited, one ledger row (`recordRun`; tested-once L3) holds its own status,
+ * `where`, `branch` (default the checked-out one), `since`, the `command` that ran, `cargo` `skipped` when
+ * the gate printed `CARGO_DEFERRED` (else null), and the tree taken before it started; a
+ * throw before the exit writes none. Inside the suite (`PILOT_GATE_HOME_STORE` set) no row is
+ * written unless `home` is passed (L8). `minutes` is the run's wall time.
  */
-export function runTests(cwd, test, { label = 'tests', home = os.homedir(), slots = {}, slot: inSlot = true } = {}) {
+export function runTests(cwd, test, { label = 'tests', where = 'tests', branch, since = null, home, tree, slots = {}, slot: inSlot = true } = {}) {
+  const ledger = ledgerHome(home);
+  home ??= os.homedir();
+  // The tree, sha and branch the run starts on, read before it can move them; `tree` is a caller's that just read it.
+  let start = null;
+  if (ledger !== null) {
+    const taken = tree !== undefined ? tree : worktreeTree(cwd);
+    // No work tree, no HEAD to ask git about.
+    start = { tree: taken, ...(taken === null ? { sha: null, branch: null } : headOf(cwd)) };
+  }
   const dir = path.join(home, '.claude', 'pilot', 'logs');
   privateDir(path.dirname(dir)); // the store, if this is its first writer (L6)
   fs.mkdirSync(dir, { recursive: true });
@@ -171,6 +187,7 @@ export function runTests(cwd, test, { label = 'tests', home = os.homedir(), slot
   const fd = fs.openSync(log, 'wx', 0o600);
   let run;
   let slot;
+  const started = Date.now();
   try {
     if (inSlot) slot = takeSlot({ cwd, env: process.env, ...slots });
     const env = slot ? { ...process.env, PILOT_GATE_SLOT: String(slot.slot) } : process.env;
@@ -179,10 +196,18 @@ export function runTests(cwd, test, { label = 'tests', home = os.homedir(), slot
     slot?.release();
     fs.closeSync(fd);
   }
+  const minutes = Math.round((Date.now() - started) / 600) / 100;
   const output = fs.readFileSync(log, 'utf8');
   const status = run.status ?? run.error?.code ?? run.signal;
+  const scope = scopeOf(output);
+  if (start !== null) {
+    recordRun({
+      where, branch: branch ?? start.branch, sha: start.sha, tree: start.tree, since, scope,
+      command: test, cargo: output.split(/\r?\n/).some((line) => line.endsWith(CARGO_DEFERRED)) ? 'skipped' : null, exit: status, minutes,
+    }, { home: ledger });
+  }
   if (status === 0) fs.rmSync(log, { force: true });
-  return { status, counts: countsOf(output), failing: failingNames(output), log, scope: scopeOf(output) };
+  return { status, counts: countsOf(output), failing: failingNames(output), log, scope, minutes };
 }
 
 /** How many failing tests a red line names before it counts the rest. */
@@ -233,11 +258,26 @@ export const NO_TEST = 'no package.json here; set git config pilot.test "<comman
 /**
  * `runTests` on the injected `test` as given, in a slot; absent, on the repository's own command
  * since `since`, the tip before the merge (suite-at-landing L4), a selection taking no slot (L9).
+ * `tree` is the one `provenRun` just read, so `runTests` does not hash the worktree again.
  */
-function runChosen(cwd, test, since, label) {
+function runChosen(cwd, test, since, label, home, tree) {
   const chosen = test === undefined ? testCommand(cwd, { since }) : { command: test, selected: false };
   if (chosen === undefined) throw new Error(NO_TEST);
-  return runTests(cwd, chosen.command, { label, slot: !chosen.selected });
+  // An injected command's row says `injected`, a since no request names, so it is never reused.
+  return runTests(cwd, chosen.command, { label, where: 'integrate', since: test !== undefined ? 'injected' : chosen.selected ? since : null, home, tree, slot: !chosen.selected });
+}
+
+/**
+ * `{ row, tree }`: the ledger row (`reusableRun`; tested-once L3, L4) that proves the merge in hand
+ * green, the latest green, complete row for its exact tree since `since`, the tip before the merge,
+ * else null; and the tree it read, undefined where it read none. An injected `test` always runs.
+ * Inside the suite an unpassed `home` reads no ledger, as `runTests` writes none (L8).
+ */
+function provenRun(cwd, test, since, home) {
+  const ledger = ledgerHome(home);
+  if (test !== undefined || ledger === null) return { row: null, tree: undefined };
+  const tree = worktreeTree(cwd);
+  return { row: reusableRun({ tree, since, home: ledger, scope: 'integrate', command: testCommand(cwd, { since })?.command }), tree };
 }
 
 /** A green run's `<counts>`, then `; <scope>` when it printed one. */
@@ -378,7 +418,8 @@ export function landedOnPilot(cwd, head, ref, git = gitView(cwd)) {
 
 /**
  * Integrate one slice branch, or with none take the base alone. `test` is the shell
- * command, run as given (default the repository's own since the tip before the merge, `runChosen`), `push` false keeps origin untouched, `trailers` are
+ * command, run as given (default the repository's own since the tip before the merge, `runChosen`, unless
+ * a ledger row under `home` proves the merge's tree green, `provenRun`), `push` false keeps origin untouched, `trailers` are
  * `Key: value` lines for every commit made. `install`, `host` and `holder` are the calls
  * out to other tools, replaceable for a test. Answers `{ ok, line, failing }`, plus `code` 2 when it was refused for want of a test command.
  */
@@ -391,6 +432,7 @@ export function integrate(branch, options = {}) {
     host, // the **Host**, null at none; unset, `hostFor(cwd)` when the prune asks
     install = installWithNpm,
     holder = holderFrom(processTable), // a slice tree a live process holds is kept (L4)
+    home, // the ledger's and the logs' home, default the user's
   } = options;
   const slice = branch?.replace(/^origin\//, '');
   const not = slice ? `NOT integrated ${slice}` : 'base NOT taken';
@@ -516,17 +558,22 @@ export function integrate(branch, options = {}) {
   }
   const merged = slice ?? taken;
   let run;
+  let reused;
   try {
-    run = runChosen(cwd, test, start, merged);
-    view.forget(); // the test command is git's to touch too, outside the view (L3)
+    const proven = provenRun(cwd, test, start, home);
+    reused = proven.row;
+    if (!reused) {
+      run = runChosen(cwd, test, start, merged, home, proven.tree);
+      view.forget(); // the test command is git's to touch too, outside the view (L3)
+    }
   } catch (err) {
-    // The log could not be written: the merge in hand is undone, as on red.
+    // The log could not be written, or the ledger not read: the merge in hand is undone, as on red.
     return fail(`${not}: the tests could not run (${firstLine(err)}); not pushed`);
   }
-  if (run.status !== 0) {
+  if (run && run.status !== 0) {
     return fail(`${not}: ${redLine(merged, run)}; not pushed`, run.failing);
   }
-  const counts = summaryOf(run);
+  const counts = reused ? `tests reused: ${reused.where} ${String(reused.sha ?? reused.tree).slice(0, 7)}` : summaryOf(run);
 
   try {
     if (slice) commit(view, subject, trailers);

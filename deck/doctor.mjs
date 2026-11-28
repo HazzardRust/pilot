@@ -30,6 +30,8 @@ import { norm as pathKey, parseWorktrees } from '../scripts/worktree-remove.mjs'
 import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resolvePluginRoot } from '../scripts/install-settings.mjs';
 import { LEGACY_PILOT, NO_NAME, firstLine, namePilotBranch, pilotBranch } from '../scripts/pilot-branch.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
+import { autoModeRow } from './doctor-automode.mjs';
+import { exportedRows } from './exported.mjs';
 import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
 import { powerRow, readPower } from './power.mjs';
 import { probeDeck } from './probe.mjs';
@@ -705,17 +707,14 @@ export async function checkAll({
   const censusGit = injected ?? leashedGit(cwd);
   const [found, view] = await Promise.all([probe(url), readView()]);
   let settings;
-  try {
-    settings = readSettings();
-  } catch {
-    settings = null;
-  }
+  try { settings = readSettings(); } catch { settings = null; }
   return [
     defenderRow({ platform, run, root }),
     powerRow({ power: readPower({ platform, run }), awake: found.awake, platform }),
     nodeRow({ nodeVersion, engines }),
     dependencyRow({ resolveDep }),
     storeRow({ storeDir, canWrite }),
+    ...exportedRows(storeDir),
     reachRow({ reach: readReach(), enabled: readEnabled() }),
     hostRow({ git, hostFor, onPath, cwd }),
     pilotBranchRow({ git, host: hostOrNull(hostFor, cwd, git) }),
@@ -724,6 +723,7 @@ export async function checkAll({
     worktreesRow({ repo: cwd, git: censusGit, statfs, now: Date.now, sizeOf, budgetMs: SIZE_BUDGET_MS }),
     cliRow('claude', onPath),
     allowRow({ readSettings }),
+    autoModeRow({ settings }),
     modsRow({ version: claudeVersion(run), settings, env }),
     ...deckRows({ found, port: new URL(url).port }),
     runeRow({ state: findRune(PLUGIN_ROOT, { platform, arch, version: PLUGIN_VERSION, run }), version: PLUGIN_VERSION }),

@@ -8,6 +8,7 @@ import './no-open.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
 
 import { bearer } from '../../hooks/lib/deck-secret.js';
 import { deckOnAPort, tempDeck } from '../testUtils.mjs';
@@ -16,7 +17,7 @@ const { postItem, registerRun } = await import('../store.mjs');
 const { viewOf } = await import('../view/index.mjs');
 const { readDeck } = await import('../view/reads.mjs');
 
-const ALPHA = 'D:/work/alpha';
+const ALPHA = path.resolve('D:/work/alpha'); // the native spelling the store reads back (portable-store L2)
 
 test('the view names every region of the screen', (t) => {
   tempDeck(t);

@@ -77,9 +77,9 @@ test('the backup is written once, before', (t) => {
   assert.deepEqual(backups(dir), [`deck.v2-${day}.json`], 'a second read writes no second backup');
 
   const fresh = tempDeck(t);
-  fs.writeFileSync(storeFile(), JSON.stringify(upgradeStore(v2())));
+  fs.writeFileSync(storeFile(), JSON.stringify({ ...upgradeStore(v2()), version: 4 }));
   listItems();
-  assert.deepEqual(backups(fresh), [], 'a v3 store is never backed up');
+  assert.deepEqual(backups(fresh), [], 'a v4 store is never backed up');
 });
 
 test('the backup is named by the local day, not the UTC one', (t) => {
@@ -126,7 +126,7 @@ test('a v1 store spelling task reads as v3 tickets, with its backup', (t) => {
   const kinds = listItems().filter((item) => item.id !== 'itm_000000000009').map((item) => item.kind);
   assert.deepEqual(kinds, ['ticket', 'ticket', 'ticket']);
   assert.deepEqual(listing(listItems().filter((item) => item.kind === 'ticket')), [['itm_000000000003', 'yellow'], ['itm_000000000001', 'green'], ['itm_000000000002', 'red']], 'the v1 green/red swap is applied');
-  assert.equal(JSON.parse(fs.readFileSync(storeFile(), 'utf8')).version, 3);
+  assert.equal(JSON.parse(fs.readFileSync(storeFile(), 'utf8')).version, 4, 'through v3 to v4 (portable-store S1)');
   assert.deepEqual(backups(dir), [`deck.v1-${day}.json`]);
   assert.equal(fs.readFileSync(path.join(dir, `deck.v1-${day}.json`), 'utf8'), old);
 });
@@ -136,7 +136,7 @@ test('the migration is one-way', (t) => {
   fs.writeFileSync(storeFile(), JSON.stringify(v2()));
   assert.deepEqual(listing(listItems().filter((item) => item.kind === 'ticket')), [['itm_000000000003', 'yellow'], ['itm_000000000001', 'red'], ['itm_000000000002', 'green']]);
   const stored = JSON.parse(fs.readFileSync(storeFile(), 'utf8'));
-  assert.equal(stored.version, 3, 'the file on disk is v3 after one read');
-  // The previous release (0.9.x before S5) reads version 1 or 2 only, so it refuses this file.
-  assert.equal([1, 2].includes(stored.version), false);
+  assert.equal(stored.version, 4, 'the file on disk is v4 after one read (portable-store S1)');
+  // A release before portable-store reads versions 1 to 3 only, so it refuses this file (L6).
+  assert.equal([1, 2, 3].includes(stored.version), false);
 });

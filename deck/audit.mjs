@@ -7,10 +7,13 @@
 
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
+import { hostPlatform } from '../hooks/lib/platform.js';
 import { repoKey } from './items.mjs';
+import { defaultRoots, encodePath, realOf } from './store-codec.mjs';
 import { storeDir } from './store.mjs';
 import { zeroCounts } from './transcripts.mjs';
 
@@ -241,15 +244,58 @@ export function renderReport(report) {
   return { table, deckBody };
 }
 
-/** A repo key as one directory name: readable, and unique by a hash of the key itself. */
-function directoryFor(repo) {
-  const key = repoKey(repo);
+/** A key as one directory name: readable, and unique by a hash of the key itself. */
+const nameOf = (key) => {
   const readable = key.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(-60);
-  const hash = crypto.createHash('sha256').update(key).digest('hex').slice(0, 10);
-  return `${readable}-${hash}`;
+  return `${readable}-${crypto.createHash('sha256').update(key).digest('hex').slice(0, 10)}`;
+};
+
+/**
+ * An existing path of this host's flavour as its realpath, anything else as given. The folder is a repository's
+ * identity, so a link and its target are one folder: on macOS a session's cwd is /var/... while process.cwd()
+ * is /private/var/..., and encodePath keeps a link's spelling (store-codec `caseOnly`).
+ */
+// Another flavour (a fixture) or not absolute: as given. A missing path's name does not move once it is made (`realOf`).
+const identity = (p) => (path.resolve(p) !== path.normalize(p) ? p : realOf(p));
+
+/** A repository's audit folder name, from its stored path (portable-store S3), so it is one name on every machine. */
+export const directoryFor = (repo, roots = defaultRoots(os.homedir(), hostPlatform())) =>
+  nameOf(encodePath(identity(repo), Object.fromEntries(Object.entries(roots).map(([name, dir]) => [name, identity(dir)]))));
+
+/** The folder name an older deck gave `repo`'s audits, from its absolute key: what `pilot store export` renames (QA J1). */
+export const legacyDirectoryFor = (repo) => nameOf(repoKey(repo));
+
+const TOLD = new Set();
+
+/**
+ * The folder an older deck named by the absolute path becomes the new name, once, when the new name is free.
+ * Both present: both kept, nothing merged or deleted, the new name read, one line on stderr.
+ */
+function renameLegacyDir(repo, dir) {
+  const legacy = path.join(path.dirname(dir), legacyDirectoryFor(repo));
+  if (legacy === dir || !fs.existsSync(legacy)) return;
+  if (fs.existsSync(dir)) {
+    if (TOLD.has(dir)) return;
+    TOLD.add(dir);
+    console.error(`[deck] the audit folders ${legacy} and ${dir} both exist; ${dir} is read and ${legacy} is kept as it is`);
+    return;
+  }
+  try {
+    fs.renameSync(legacy, dir);
+  } catch (err) {
+    // ENOENT: another process renamed it first. Anything else (a lock): the folder is kept where it is, and the next call tries again.
+    if (err.code !== 'ENOENT' && !TOLD.has(legacy)) {
+      TOLD.add(legacy);
+      console.error(`[deck] the audit folder ${legacy} could not be renamed to ${dir} (${err.message}); it is kept as it is`);
+    }
+  }
 }
 
-const auditDir = (repo) => path.join(storeDir(), 'audits', directoryFor(repo));
+const auditDir = (repo) => {
+  const dir = path.join(storeDir(), 'audits', directoryFor(repo));
+  renameLegacyDir(repo, dir);
+  return dir;
+};
 const recordFile = (repo) => path.join(auditDir(repo), 'record.json');
 
 /** handoff-books L2: the offer repeats after this many counted hand-offs since the last offer or report. */

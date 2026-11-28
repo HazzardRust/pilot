@@ -26,7 +26,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { deckOnAPort, tempDeck } from '../testUtils.mjs';
+import { deckOnAPort, storedDeck, tempDeck } from '../testUtils.mjs';
 
 const { listDeckNumbers, listItems, listStoredRuns, registerRun, storeFile } =
   await import('../store.mjs');
@@ -106,7 +106,7 @@ test('a number the mint never hands out is no number at all', (t) => {
   // label alone rather than `D0 pilot`, which would name a deck that is not there.
   registerRun({ repo: MINE, pid: process.pid });
   registerRun({ repo: THEIRS, pid: process.pid });
-  const deck = JSON.parse(fs.readFileSync(storeFile(), 'utf8'));
+  const deck = storedDeck();
   deck.decks[repoKey(MINE)] = 0;
   deck.decks[repoKey(THEIRS)] = -1;
   fs.writeFileSync(storeFile(), JSON.stringify(deck), 'utf8');

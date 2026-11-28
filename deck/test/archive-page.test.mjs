@@ -135,8 +135,10 @@ test('a credential is withheld and never-shown files are not read', async (t) =>
 
   assert.equal(rows.find((row) => row.id === leaked.id).title, '<withheld: credential>');
   assert.ok(!JSON.stringify(rows).includes('sk-aaaa'), 'no string of any row holds the key');
-  assert.deepEqual(NEVER_SHOWN, ['deck.secret', 'deck-open.html', 'logs/*.log']);
-  const never = seen.filter((file) => /\/deck\.secret$|\/deck-open\.html$|\/logs\/[^/]*\.log$/.test(file));
+  // Each never-shown glob as a path ending: `*` is any run of characters but `/`.
+  assert.ok(NEVER_SHOWN.includes('deck.secret'), 'the secret is never shown');
+  const globs = NEVER_SHOWN.map((glob) => new RegExp(`/${glob.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]*')}$`));
+  const never = seen.filter((file) => globs.some((glob) => glob.test(file)));
   assert.deepEqual(never, [], 'no never-shown file was read');
   assert.ok(seen.some((file) => file.endsWith('/deck.json')), 'the spy saw the store read');
 });

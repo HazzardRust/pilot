@@ -35,8 +35,10 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `crew-settle.mjs` | the deck's crew-handoff closes: a `co-pilot` grant's, and the settle after every change, each traced |
 | `credential.mjs` | the one credential check, `findCredential`, for every deck post, land's output and the classifier log |
 | `daemon.mjs` | the deck process: starts the server over the store; holds a leash, or the idle rule on the user's deck |
+| `doctor-automode.mjs` | the doctor's `auto mode defaults` row: fails when a user autoMode list drops `"$defaults"`, never a write (classifier-env spec 8) |
 | `doctor.mjs` | `pilot doctor`: one row per local check, `pass`, `fail` or `cannot tell` (Defender over the projects root and its admin step, Power from `power.mjs`, Node against engines, the deck dependency, the store directory writable, `gh`, `git`, `claude` on PATH); exit 1 on a fail; reads only, bar one temp file it removes (process-gc L12, daemon-lifecycle spec 10) |
 | `exit-route.mjs` | `POST /api/exit { version }`: 202 and the daemon's shutdown only for a newer caller, 409 for one not newer or while a landing runs (daemon-lifecycle L3, ADR 0156) |
+| `exported.mjs` | reads `exported.json`, never writes it: the deck start's one notice per export (remembered in `exported-noticed.json`) and `pilot doctor`'s `exported` row (portable-store spec 10) |
 | `gc.mjs` | `pilot gc`: stops each orphan `procs.mjs` names and nothing else, a test root as a tree; one line per stop, and `pilot land` runs it once landed (process-gc L11, L14) |
 | `gate2-base.mjs` | the gate2 base check: refuses a gate2 whose sha does not merge clean onto pilot, local git only |
 | `gate2-checks.mjs` | the gate2 checks field: where CI is configured at its sha, a gate2 carries `pilot checks <sha>`'s line, green at that sha, local git only (ci-gate spec 4) |
@@ -58,6 +60,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `leash.mjs` | the leash a daemon that is not the user's deck holds: its pid and paths from argv, the 2 s poll that ends it, and the session's `CLAUDE_PID` (process-gc L1-L4) |
 | `lineage.mjs` | the gate1 lineage check: refuses a design-docs-only post whose branch is not on pilot's lineage |
 | `look.mjs` | `pilot look`: reads a surface's `surface.json` and captures a screen by route with one argv-started process; `apply` lays a playground export onto the token file |
+| `machine.mjs` | `machine.json`: the store's machine-bound state (sessions, leases, switches, live tickets, landing pids) and root overrides |
 | `memory.mjs` | each deck process's memory readings, one JSON line each |
 | `one-line.mjs` | `oneLine`: text from a peer or caller made one printable line, for logs and stderr |
 | `open.mjs` | opens the deck page in a browser when a run registers |
@@ -92,10 +95,14 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `status-command.mjs` | `pilot status`: the deck's url, pid, version against the plugin's, uptime, live agents, and deck.log's last 20 lines; reads only (daemon-lifecycle spec 8, 9) |
 | `status.mjs` | the slice table and its Yours column |
 | `store-archive.mjs` | the store's month archive: closed items over 30 days old moved to `deck.archive-YYYY-MM.json`, read back by id |
+| `store-bundle.mjs` | the bundle: the allowlisted portable part of a store as one gzipped JSON document with a manifest |
+| `store-codec.mjs` | stored paths: every structured path in deck.json as `@<root>/<rel>` against this machine's roots |
 | `store-core.mjs` | the store's core: reading and writing deck.json, the refusals and validators, added decks |
 | `store-defaults.mjs` | a plain question's default, taken by the deck at 20 minutes; re-exported by `store-items.mjs` |
 | `store-dir.mjs` | where the deck keeps its files, loadable without the store |
+| `store-gone.mjs` | what an imported store keeps of the old machine: its landings in flight read interrupted, and each missing worktree gets a printed rebuild line |
 | `store-items.mjs` | the store's items: posting, replies, the gates, resolving, reopening and closing |
+| `store-move.mjs` | `pilot store export`: the bundle written, `exported.json` marked, and work on no remote listed |
 | `store-recovery.mjs` | the store's backup: `deck.json.bak` kept before each write, and a corrupt store set aside and recovered from it |
 | `store-restore.mjs` | `pilot store restore`: the backup swapped in by hand, refused while a deck serves the store on any port |
 | `store-steps.mjs` | a ticket's human steps: the steps thread's one writer, the user's Done, and the ticket's one close the report shares |

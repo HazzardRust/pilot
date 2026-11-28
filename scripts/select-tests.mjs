@@ -106,7 +106,7 @@ const FILE_NAME = /[\w.-]*\.\w+/g;
 const WALKS_TREE = /(['"])ls-files\1|readdirSync\(\s*(?:path\.(?:join|resolve|dirname)\(\s*)?[A-Z][A-Z0-9_]*\b/;
 const SCRIPT = /\.(?:mjs|cjs|js)$/;
 const SOURCE = /\.(?:mjs|cjs|js|mts|cts|ts)$/;
-const SCOPE = /^(?:selected \d+ of \d+ test files since [0-9a-f]{7}|full suite: .+)$/;
+const SCOPE = /^(?:selected \d+ of \d+ test files since [0-9a-f]{7}(?:; deferred: .+)?|full suite: .+)$/;
 
 const lines = (out) => out.split('\0').filter(Boolean);
 const gitIn = (cwd) => (args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true });
@@ -126,8 +126,10 @@ function importsOf(text, rel) {
  * full run with `reason`; `total` the test files a full run starts; `since` the merge-base sha, or the tree
  * itself when `since` names one (a proved tree, diffed as it is, a `.github/` change past it a full run too);
  * `changed`, beside `files` only, the repository-relative paths the diff named, sorted.
+ * At `scope: 'slice'` (tested-once spec 3) a trigger, a lonely script or an argv overflow keeps `files` and names
+ * itself in `deferred`, the full run left to integrate; an unresolvable ref or a failed diff still runs full.
  */
-export function selectTests({ cwd, since, git = gitIn(cwd) }) {
+export function selectTests({ cwd, since, git = gitIn(cwd), scope = 'wide' }) {
   const present = presentFiles(cwd, git);
   const tests = present.filter((rel) => path.posix.matchesGlob(rel, TEST_GLOB));
   const total = tests.length;
@@ -162,10 +164,14 @@ export function selectTests({ cwd, since, git = gitIn(cwd) }) {
     return { files: null, total, since: base, reason: 'git diff failed' };
   }
   const paths = [...changed].sort();
+  const slice = scope === 'slice';
+  const deferred = [];
   // Past a proved tree a CI file changed too, one landed on the target after the feature branched included, runs full:
   // the run that proved the tree is the one it changed (cheap-suite A2).
   const trigger = FULL_TRIGGERS.find((rel) => changed.has(rel)) ?? (proved ? paths.find(outrunsProof) : undefined);
-  if (trigger) return { files: null, total, since: base, reason: `${trigger} changed` };
+  if (trigger && !slice) return { files: null, total, since: base, reason: `${trigger} changed` };
+  // At slice scope (tested-once A5) the full run waits for integrate's wide one; the matched files still run.
+  if (trigger) deferred.push(`${trigger} changed`);
   const source = new Map(present.filter((rel) => SOURCE.test(rel)).map((rel) => [rel, fs.readFileSync(path.join(cwd, rel), 'utf8')]));
   const importers = new Map();
   for (const [rel, text] of source) {
@@ -187,11 +193,21 @@ export function selectTests({ cwd, since, git = gitIn(cwd) }) {
     const fromNames = new Set([...from].map((r) => path.posix.basename(r)));
     return !tests.some((t) => from.has(t) || named(t, fromNames));
   });
-  if (lonely) return { files: null, total, since: base, reason: `${lonely} reaches no test` };
-  const files = selected.map((rel) => path.resolve(cwd, rel)).sort();
+  if (lonely && !slice) return { files: null, total, since: base, reason: `${lonely} reaches no test` };
+  if (lonely) deferred.push(`${lonely} reaches no test`);
+  let files = selected.map((rel) => path.resolve(cwd, rel)).sort();
   const argv = files.join(' ').length;
-  if (argv > ARGV_LIMIT) return { files: null, total, since: base, reason: `selection is ${argv} characters of argv, over ${ARGV_LIMIT}` };
-  return { files, total, since: base, changed: paths };
+  const overflow = `selection is ${argv} characters of argv, over ${ARGV_LIMIT}`;
+  if (argv > ARGV_LIMIT && !slice) return { files: null, total, since: base, reason: overflow };
+  if (argv > ARGV_LIMIT) {
+    // At slice scope an overlong selection keeps the nearest tests: the changed ones, the ones importing a changed
+    // file directly, and the tree tests.
+    const direct = new Set([...changed].flatMap((rel) => importers.get(rel) ?? []));
+    files = selected.filter((rel) => changed.has(rel) || direct.has(rel) || tree.has(rel)).map((rel) => path.resolve(cwd, rel)).sort();
+    if (files.join(' ').length > ARGV_LIMIT) return { files: null, total, since: base, reason: overflow };
+    deferred.push(overflow);
+  }
+  return { files, total, since: base, changed: paths, ...(deferred.length ? { deferred } : {}) };
 }
 
 /**
@@ -265,11 +281,15 @@ export function replay({ cwd, count }) {
 /** `<sha7> <subject>  <n> of <m>`, or `... full (<m>)` for a full run. */
 const replayLine = (r) => `${r.sha.slice(0, 7)} ${r.subject}  ${r.selected === 'full' ? `full (${r.total})` : `${r.selected} of ${r.total}`}`;
 
-/** `selected <n> of <m> test files since <sha7>`, or `full suite: <reason>`. */
+/** `selected <n> of <m> test files since <sha7>`, or `full suite: <reason>`; then `; deferred: <reason>, ...` when any was. */
 export function scopeLine(selection) {
-  if (selection.files === null) return `full suite: ${selection.reason}`;
-  return `selected ${selection.files.length} of ${selection.total} test files since ${selection.since.slice(0, 7)}`;
+  const deferred = selection.deferred?.length ? `; deferred: ${selection.deferred.join(', ')}` : '';
+  if (selection.files === null) return `full suite: ${selection.reason}${deferred}`;
+  return `selected ${selection.files.length} of ${selection.total} test files since ${selection.since.slice(0, 7)}${deferred}`;
 }
+
+/** The line a slice-scope gate prints for the cargo step it deferred to CI and land (tested-once spec 3; L4). */
+export const CARGO_DEFERRED = 'rune deck: deferred to CI and land';
 
 /** The last scope line in a gate's `output`, or null when it printed none. */
 export function scopeOf(output) {

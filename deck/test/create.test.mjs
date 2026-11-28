@@ -19,7 +19,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { aSandbox, deckOnAPort, tempDeck } from '../testUtils.mjs';
+import { aSandbox, deckOnAPort, storedDeck, tempDeck } from '../testUtils.mjs';
 import { KIND_CHAT, KIND_USER, isQueued } from '../items.mjs';
 import { queueOf } from '../status.mjs';
 import { tabsOf } from '../tabs.mjs';
@@ -188,7 +188,7 @@ test('a stored created chat reads as a user thread, replies and all, and a secon
   assert.deepEqual(read(), first, 'twice without change');
   assert.equal(listItems().filter((item) => item.kind === KIND_CHAT).length, 1, "the repository's own chat is untouched");
   registerRun({ repo: ALPHA, pid: process.pid });
-  const stored = JSON.parse(fs.readFileSync(storeFile(), 'utf8')).items.find((item) => item.id === 'itm_b71a313e761c');
+  const stored = storedDeck().items.find((item) => item.id === 'itm_b71a313e761c');
   assert.deepEqual(stored, first, 'the next write stores it as read');
 });
 

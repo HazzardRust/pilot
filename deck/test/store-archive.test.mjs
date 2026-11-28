@@ -12,8 +12,9 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { archiveOld, archivedItem } from '../store.mjs';
-import { freePort, tempDeck } from '../testUtils.mjs';
+import { repoKey } from '../items.mjs';
+import { archiveOld, archivedItem, storeFile } from '../store.mjs';
+import { freePort, storedDeck, tempDeck } from '../testUtils.mjs';
 
 const DAEMON = fileURLToPath(new URL('../daemon.mjs', import.meta.url));
 const NOW = new Date('2026-10-17T12:00:00.000Z');
@@ -21,18 +22,19 @@ const OLD = '2026-09-01T10:00:00.000Z';
 const OLDER = '2026-08-03T10:00:00.000Z';
 const RECENT = '2026-10-10T10:00:00.000Z';
 
-const item = (id, fields = {}) => ({ id, kind: 'chat', repo: 'C:/repo', title: `the ${id} thread`, createdAt: '2026-07-01T00:00:00.000Z', ...fields });
+const REPO = path.resolve('C:/repo'); // the native spelling the store reads back (portable-store L2)
+const item = (id, fields = {}) => ({ id, kind: 'chat', repo: REPO, title: `the ${id} thread`, createdAt: '2026-07-01T00:00:00.000Z', ...fields });
 
-/** A version 3 store holding `items`, with every top-level field L6 keeps live. */
+/** A version 4 store holding `items`, with every top-level field L6 keeps live; its paths absolute, which v4 reads as they are. */
 function plant(dir, items) {
   const deck = {
-    version: 3,
+    version: 4,
     items,
-    runs: [{ id: 'run_1', repo: 'C:/repo' }],
+    runs: [{ id: 'run_1', repo: REPO }],
     records: [{ id: 'rec_1' }],
     seq: 41,
     deckSeq: 3,
-    decks: { 'C:/repo': 1 },
+    decks: { [repoKey(REPO)]: 1 },
     coPilots: {},
     switches: {},
   };
@@ -40,7 +42,7 @@ function plant(dir, items) {
   return deck;
 }
 
-const live = (dir) => JSON.parse(fs.readFileSync(path.join(dir, 'deck.json'), 'utf8'));
+const live = (dir) => (assert.equal(storeFile(), path.join(dir, 'deck.json')), storedDeck());
 const liveIds = (dir) => live(dir).items.map((each) => each.id);
 
 /** How many copies of `id` the store directory holds outside the live store, its backup and its log. */

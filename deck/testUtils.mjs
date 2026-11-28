@@ -13,10 +13,12 @@ import net from 'node:net';
 import path from 'node:path';
 
 import { ensureSecret } from '../hooks/lib/deck-secret.js';
-import { isWindows } from '../hooks/lib/platform.js';
+import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
 import { createDeckHttpServer } from './server.mjs';
 import { liveTicketOf } from './items.mjs';
 import { deckLanes, listItems, parkTicket, postItem, registerRun, storeFile } from './store.mjs';
+import { readMachine, rootsOf } from './machine.mjs';
+import { fromStored } from './store-codec.mjs';
 import { install } from './ui/js/page.mjs';
 import { renderHomePage } from './ui/render.mjs';
 
@@ -170,6 +172,16 @@ export const takeLive = (id) => {
   Object.assign(deck.items.find((item) => item.id === id), { live: true, takenAt: new Date().toISOString() });
   fs.writeFileSync(file, JSON.stringify(deck), 'utf8');
   return listItems().find((item) => item.id === id);
+};
+
+/**
+ * deck.json as it is on disk with only its stored paths decoded and machine.json rejoined (portable-store S1, S2):
+ * a test that asserts the file's own shape reads it here, so a path field reads back absolute and every other byte
+ * as written.
+ */
+export const storedDeck = () => {
+  const machine = readMachine(path.dirname(storeFile()));
+  return fromStored(JSON.parse(fs.readFileSync(storeFile(), 'utf8')), machine, rootsOf(machine, os.homedir(), hostPlatform()));
 };
 
 /**

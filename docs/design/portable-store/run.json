@@ -1,0 +1,383 @@
+{
+  "slug": "portable-store",
+  "feature": "Portable store, export and import",
+  "ticket": "itm_d9b831208266",
+  "branch": "feat/portable-store",
+  "base": "main",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-portable-store",
+  "qa": {
+    "branch": "qa/portable-store",
+    "worktree": "C:/Users/jrylk/Projects/pilot-qa-portable-store",
+    "url": "http://127.0.0.1:4391"
+  },
+  "artefact": "docs/design/portable-store/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated (CI fixed by codec CI fix 2, checks green at 8d2b2b8)",
+      "branch": "slice/portable-store-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/portable-store-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated, checks green at 4364c19 after macOS audit fix",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/portable-store-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated, checks green at 35044a2",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/portable-store-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated, checks green at 1efde98 after macOS import test fix",
+      "after": [
+        "S4"
+      ],
+      "branch": "slice/portable-store-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "integrated, checks green at fe77302",
+      "after": [
+        "S5"
+      ],
+      "branch": "slice/portable-store-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s6"
+    },
+    {
+      "slice": "S7",
+      "state": "integrated, checks green at 38b2bf7",
+      "after": [
+        "S4"
+      ],
+      "branch": "slice/portable-store-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s7"
+    },
+    {
+      "slice": "S8",
+      "state": "integrated 3bf2e27, checks green (B3 run deferred to QA)",
+      "branch": "slice/portable-store-s8",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s8"
+    },
+    {
+      "slice": "codec CI fix",
+      "state": "on feat at f523091 by user push; still red, see S1",
+      "after": [
+        "S1"
+      ],
+      "branch": "fix/portable-store-s1-ci",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-portable-store-s1"
+    },
+    {
+      "slice": "codec CI fix 2",
+      "state": "on feat at 8d2b2b8; checks green (Windows job re-run)",
+      "after": [
+        "S1"
+      ],
+      "branch": "fix2/portable-store-s1-ci",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix2-portable-store-s1"
+    },
+    {
+      "slice": "drift 8ff2d9a",
+      "state": "merged at 697d10d, pushed; gate red on 2 rune empty:: tests until the drift fix integrates"
+    },
+    {
+      "slice": "S9 drift fix (added)",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "fix/portable-store-drift",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-portable-store-drift"
+    },
+    {
+      "slice": "drift 3c08423",
+      "state": "merged at e39480a, pushed, clean; replanned, plan kept",
+      "after": [
+        "S9 drift fix (added)"
+      ]
+    },
+    {
+      "slice": "macOS audit fix",
+      "state": "integrated (ff) at 4364c19, checks green",
+      "after": [
+        "S3"
+      ],
+      "branch": "fix/portable-store-s3-mac",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-portable-store-s3-mac"
+    },
+    {
+      "slice": "macOS import test fix",
+      "state": "integrated (ff) at 1efde98, checks green",
+      "after": [
+        "S5"
+      ],
+      "branch": "fix/portable-store-s5-mac",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-portable-store-s5-mac"
+    },
+    {
+      "slice": "portable-store",
+      "state": "landing started in C:/Users/jrylk/Projects/pilot-feat-portable-store"
+    },
+    {
+      "slice": "principles fix round",
+      "state": "fixing",
+      "after": [
+        "S6"
+      ],
+      "branch": "fix/portable-store-principles",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-portable-store-principles"
+    },
+    {
+      "slice": "feature",
+      "state": "walkthrough itm_1bc081da6aaa posted at d95b2ec (checks green); Differences itm_3c365be0375b open; ticket green (concluding)",
+      "branch": "feat/portable-store"
+    }
+  ],
+  "findings": [
+    "dropped: QA F-new — import rebuild lines spell 2 feature-row repos lowercased (deck/store-gone.mjs:83-94); cosmetic, command works on win32; left to the user as Differences row 4"
+  ],
+  "next": "Gate 2 itm_f827f86a1a73 posted (PR #149, d95b2ecb, trial clean, checks green); no agent live. Waiting on user's Sign off press. On press: spawn pilot-lander with the gate2 id; on `report due`: stop scratch decks 4390/4391/4392 (qa2 deck-down.sh), reply Findings:. User owes: merge PR #167.",
+  "updatedAt": "2026-11-28T10:53:46.095Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "context compacted during diagnosis before any commit, losing every finding; it restarted from a clean worktree",
+      "evidence": "'My context was compacted... no record of any finding before the compaction'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "rune tests key on forward-slash repo literals that the deck answers back native on Windows since S1; 14 other rune test files use C:/work literals and will drift the same way the first time one compares",
+      "evidence": "drift fix 6d4a74e: tickets.repo 'C:\\\\work\\\\alpha' on 697d10d vs 'C:/work/alpha' on 8ff2d9a"
+    },
+    {
+      "agent": "architect",
+      "what": "The checker now requires an ## Overview the signed artefact never had",
+      "evidence": "check-slices overview-plain, exit 1"
+    },
+    {
+      "agent": "architect",
+      "what": "No deck_read tool, so it found the earlier L2 question by reading the live deck.json",
+      "evidence": "itm_ad2385df32fa"
+    },
+    {
+      "agent": "architect",
+      "what": "Harness forced hand-backs before main's verdict lines and before the gate1 could post; a leftover blocked-step thread refused the gate1",
+      "evidence": "3 hand-backs; refusal on itm_fde95ed5d125"
+    },
+    {
+      "agent": "co-pilot",
+      "what": "A successor co-pilot inherits no Verdict or Evidence rows for pushed slices",
+      "evidence": "S2, S3, S4 needed 4 re-review spawns"
+    },
+    {
+      "agent": "implementer",
+      "what": "14 rune test files use C:/work literals the deck now answers back in native form",
+      "evidence": "2 empty:: tests red after the drift merge"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot deck --scratch cannot take an existing store (always mkdtemp); a copied store needs node deck/daemon.mjs with PILOT_DECK_DIR by hand",
+      "evidence": "S2 B4 evidence run on feba0f1",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node bin/pilot.mjs deck --help starts the deck launcher against the live store instead of printing help",
+      "evidence": "printed 'The deck is up at 127.0.0.1:4321'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "chrome-devtools tools not reachable from a Sonnet implementer; S2 B4 read over the HTTP API, no screenshot",
+      "evidence": "ToolSearch found none",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "slice implementer reports lost at a pause leave integrate refusing (no Evidence rows); re-gathering cost one agent",
+      "evidence": "NOT integrated slice/portable-store-s3: S3: B1 has no --trailer Evidence",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "selected suite ~11 min for a 6-file slice; repo-wide checks (deck README module list, archive-coverage NEVER_SHOWN) not named in the slice file surfaced only at the gate",
+      "evidence": "S7 duration_ms 681776; deck-readme and archive-coverage reds",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck/doctor.mjs at 798 of the 800-line bar after S7",
+      "evidence": "wc -l deck/doctor.mjs 798",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "storePid with no deck.pid probes PILOT_DECK_PORT or 4321 where the live deck answers; a scratch-home import is refused unless PILOT_DECK_PORT names a free port",
+      "evidence": "S5 B6 run",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared rune-target dir: cargo link LNK1104, exe held by another build; rune suite did not run in S5 gate",
+      "evidence": "S5 gate",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice briefs name a browser look, but implementers here have no Chrome DevTools MCP; looks fall to QA",
+      "evidence": "S2 B4, S5 B6, S7 B3 read over HTTP only",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate refuses a fix branch for the very red it fixes (red feature tip takes no slice); the fix has to go onto feat by hand as a fast-forward",
+      "evidence": "NOT integrated fix/portable-store-s3-mac: checks red at 66a8b29: gate (macos-latest); fix the feature first",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Edit/Write turn \\uXXXX escapes into literal characters; a literal U+2028 in a regex literal broke parsing",
+      "evidence": "SyntaxError: Invalid regular expression in store-gone.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "importing deck/testUtils.mjs from a seed script silently moves HOME and drops PILOT_DECK_DIR",
+      "evidence": "S6 B3 first seed wrote to the suite temp home",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "scripts/test/worktrees.test.mjs red on any machine without gh auth or git config pilot.branch",
+      "evidence": "'no pilot branch name: run gh auth login' on feat in a throwaway worktree",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "NEVER_SHOWN pinned in two tests (archive-coverage, archive-page): each new store file costs two edits",
+      "evidence": "S2/S4 fixer",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed log ends with no summary line and the run did not exit on its own; completion inferred from the log going quiet",
+      "evidence": "S7 merge fix gate, 5258 passing lines, no final ℹ summary",
+      "size": 1
+    },
+    {
+      "agent": "evidence-runner",
+      "what": "No diff coverage: npm test exited 1 in the runner's worktree (10 deck tests red, timing and deck-port ones) so diff-coverage never ran; the same tree was 5604/0 at integrate and green on CI",
+      "evidence": "35 min run on fe77302 while other gates ran; e.g. a 50 ms bound hit 119 ms"
+    },
+    {
+      "agent": "evidence-runner",
+      "what": "No mutation score: stryker hit its 900 s cap after instrumenting 4322 mutants in 9 files",
+      "evidence": "exit 124; only the initial test run finished"
+    },
+    {
+      "agent": "evidence-runner",
+      "what": "Gate prints `home store changed: ~/.claude/pilot/deck.json; live deck 7288 up` whenever the live deck writes during a run; cannot tell a test's write from the deck's own",
+      "evidence": "printed in the runner's npm test and in integrate gates"
+    },
+    {
+      "agent": "evidence-runner",
+      "what": "Its report reached main after its parent fundamentalist had finished",
+      "evidence": "hand-back to main, ~35 min after the review was triaged"
+    },
+    {
+      "agent": "fix implementer",
+      "what": "glossary.test pins the term count, so any glossary addition reds the gate",
+      "evidence": "5 new terms cost one gate red and a rerun (pin 81 -> 86); same pin bit tested-once"
+    },
+    {
+      "agent": "co-pilot",
+      "what": "pilot integrate refuses any branch on a red tip, even the fix for that red",
+      "evidence": "two macOS fixes went onto feat by fast-forward"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait timed out twice under machine load (deck slow to answer; doctor showed git config > 5 s): 2 restarts, 1 doctor run",
+      "size": 3000
+    },
+    {
+      "kind": "drain",
+      "what": "Forced early hand-backs (co-pilot x3, QA x2, architect x3) pushed their tails and reports into the pilot's context",
+      "size": 60000
+    },
+    {
+      "agent": "qa",
+      "what": "Thread views are slow and write the store: /api/view?screen=thread calls seeThread, so each read writes the 6 MB deck",
+      "evidence": "1,276 threads ran over 15 min; QA sampled 228"
+    },
+    {
+      "agent": "qa",
+      "what": "Scratch decks running beside the suite caused the reds",
+      "evidence": "30 flakes at fe77302d; 0 with the decks stopped"
+    },
+    {
+      "agent": "qa",
+      "what": "No DevTools MCP anywhere in the chain, so every page look is pushed to the user",
+      "evidence": "5 walkthrough screens owed by eye"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot checks reports a superseded, cancelled CI run as `checks red`; the pilot had to list runs with gh to tell",
+      "size": 1500
+    },
+    {
+      "kind": "drain",
+      "what": "QA ran out of context before the walkthrough twice (tested-once, portable-store); the pilot wrote its hand-back to a scratchpad file for the successor",
+      "size": 6000
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "/api/items needs the bearer secret; a first probe came back 401 and read as 0 items",
+      "evidence": "items-439x.json 401",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck_post walkthrough refuses pr and sha; the definition does not say which fields it takes",
+      "evidence": "'a walkthrough item takes no pr'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "artefact has no Reference: line, yet surface: true still requires the Differences question",
+      "evidence": "grep architecture.md: none",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "ticket plan.sha on the deck reads e39480a (a drift merge on feat) while the signed gate1 is 8a0f3e4 on design/portable-store",
+      "evidence": "deck_read itm_d9b831208266 plan.sha e39480a; gate1 itm_259407da6fc7 sha 8a0f3e48",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "GET /api/record needs the deck secret, so a successor reads run.json in the feat worktree instead",
+      "evidence": "'the deck wants its secret'",
+      "size": 1
+    }
+  ]
+}

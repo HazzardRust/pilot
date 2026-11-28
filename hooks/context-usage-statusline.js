@@ -59,6 +59,17 @@ function readDeck(file) {
   }
 }
 
+// A v4 store's key, `@<root>/<rel>` (portable-store L2, deck/store-codec.mjs), as the key of the dir it names;
+// null for a root this reader does not derive or a `..`, so it matches nothing. Roots are derived as the codec
+// derives them (`rootsOf` in deck/machine.mjs): machine.json's `--root` overrides first, then the defaults.
+function storedKey(key, given) {
+  const [, name = '', rel = ''] = /^@([^/\\]+)\/(.*)$/s.exec(key) || [];
+  const drive = /^drive-([a-z])$/.exec(name);
+  const override = given && Object.prototype.hasOwnProperty.call(given, name) && typeof given[name] === 'string' ? given[name] : null;
+  const root = override || (name === 'home' ? os.homedir() : drive ? `${drive[1].toUpperCase()}:\\` : name === 'root' ? '/' : null);
+  return root && !rel.split(/[\\/]/).includes('..') ? repoKey(path.join(root, ...rel.split('/'))) : null;
+}
+
 // The number the deck minted for this directory, or null — which is the ordinary
 // answer for a deck that has not registered since numbering arrived, because a
 // number is minted lazily (A5). Null rather than a placeholder: the status line
@@ -66,7 +77,14 @@ function readDeck(file) {
 function deckNumberFor(deck, dir) {
   const decks = deck && deck.decks;
   if (!decks || typeof decks !== 'object') return null;
-  const number = decks[repoKey(dir)];
+  const want = repoKey(dir);
+  let machine; // read only once a stored key needs its roots
+  const given = () => {
+    if (machine === undefined) machine = readDeck(path.join(path.dirname(deckFile()), 'machine.json'));
+    return machine && machine.roots;
+  };
+  const key = Object.keys(decks).find((k) => (k.startsWith('@') ? storedKey(k, given()) : k) === want);
+  const number = key === undefined ? undefined : decks[key];
   return Number.isInteger(number) && number > 0 ? number : null;
 }
 

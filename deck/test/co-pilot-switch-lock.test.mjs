@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { KIND_QUESTION, repoKey } from '../items.mjs';
-import { aTicket, page, rowsOf, takeLive, tempDeck } from '../testUtils.mjs';
+import { aTicket, page, rowsOf, storedDeck, takeLive, tempDeck } from '../testUtils.mjs';
 
 const { DeckRefusal, mergeTicket, moveTicket, needTicket, parkTicket, pivotTicket, postItem, registerRun, requestSwitch, setCoPilot, storeFile, takeTicket } =
   await import('../store.mjs');
@@ -21,7 +21,7 @@ const { DeckRefusal, mergeTicket, moveTicket, needTicket, parkTicket, pivotTicke
 const REPO = path.resolve('D:/work/pilot');
 
 const asked = (ticket) => postItem({ kind: KIND_QUESTION, title: `About ${ticket.title}?`, body: 'Pick one.', repo: REPO, ticket: ticket.id });
-const stored = () => JSON.parse(fs.readFileSync(storeFile(), 'utf8'));
+const stored = storedDeck;
 const lanes = () => stored().switches?.[repoKey(REPO)] ?? {};
 const coPilotLockedBy = (to) => (err) =>
   err instanceof DeckRefusal && err.message === `a co-pilot switch to ${to} is pending in this directory; complete or cancel it first`;

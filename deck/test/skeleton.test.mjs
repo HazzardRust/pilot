@@ -79,7 +79,7 @@ test('a write leaves no temporary file behind', (t) => {
   const dir = tempDeck(t);
   postItem({ kind: 'walkthrough', title: 'Slice 1', body: 'open the deck' });
 
-  assert.deepEqual(fs.readdirSync(dir).sort(), [path.basename(storeFile()), 'deck.secret'].sort());
+  assert.deepEqual(fs.readdirSync(dir).sort(), [path.basename(storeFile()), 'deck.secret', 'machine.json'].sort());
 });
 
 test('a corrupt store is reported, never silently discarded', (t) => {
@@ -105,10 +105,10 @@ test('a store that holds a bare list is reported as not a deck', (t) => {
 
 test('a store written by a newer deck is reported, never rewritten', (t) => {
   tempDeck(t);
-  fs.writeFileSync(storeFile(), '{"version":4,"items":[]}', 'utf8');
+  fs.writeFileSync(storeFile(), '{"version":5,"items":[]}', 'utf8');
 
-  assert.throws(() => listItems(), /version 4.*reads version 3/s);
-  assert.equal(fs.readFileSync(storeFile(), 'utf8'), '{"version":4,"items":[]}');
+  assert.throws(() => listItems(), /version 5.*reads version 4/s);
+  assert.equal(fs.readFileSync(storeFile(), 'utf8'), '{"version":5,"items":[]}');
 });
 
 // Slice 1 refused any kind outside its list. Slice 3 opened kinds up (A11), so

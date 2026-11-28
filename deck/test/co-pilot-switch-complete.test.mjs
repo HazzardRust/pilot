@@ -13,14 +13,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { repoKey } from '../items.mjs';
-import { aTicket, deckOnAPort, page, rowsOf, takeLive, tempDeck } from '../testUtils.mjs';
+import { aTicket, deckOnAPort, page, rowsOf, storedDeck, takeLive, tempDeck } from '../testUtils.mjs';
 
 const { registerRun, repliesSince, requestSwitch, setCoPilot, storeFile } = await import('../store.mjs');
 const { printed } = await import('../wait.mjs');
 
 const REPO = path.resolve('D:/work/pilot');
 
-const stored = () => JSON.parse(fs.readFileSync(storeFile(), 'utf8'));
+const stored = storedDeck;
 const lanes = () => stored().switches?.[repoKey(REPO)] ?? {};
 
 /** How many times `fn` replaced the store file. */

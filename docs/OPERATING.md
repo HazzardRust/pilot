@@ -42,6 +42,16 @@ orphaned processes, and `pilot worktrees prune` removes merged-clean worktrees. 
 
 The deck does, by `pilot pr`, and the crew never does (ADR 0182). On a gate1 post, every `deck_status`, and a walkthrough or gate2 post with a comment, for a ticket with a gate1, the deck opens or rewrites the draft feature PR `feat/<slug>` (its body and its base) and posts QA's one comment on it. A failed write puts one line, `feature PR not updated: <line>`, on the ticket's thread and is retried on the next trigger. Agents push their own branches, and the implementer opens its own draft slice PR; nothing else they run writes to GitHub.
 
+## What the classifier is told
+
+A Start writes an `autoMode.environment` block into `~/.claude/pilot/start-settings.json`, the settings file the session is started with, so the auto-mode classifier knows about the pilot's own environment. The block is `"$defaults"` (the classifier's built-in environment) followed by the pilot's lines: one on the trusted repository (the git repository the session started in and its worktrees, and none when the session did not start in a git repository), one saying that in a confirmed pilot worktree a build-output directory at the root (`node_modules`, `dist`, `build`, `target`, `coverage`) is regenerable, so deleting one loses no work, but only when the delete command itself runs only if `git check-ignore -q` on that directory succeeds (the classifier reads commands, not their output). The lines are the `CLASSIFIER_ENVIRONMENT` constant in `deck/run-env.mjs`; read them there.
+
+The block loosens no rule. It adds no `allow` rule and grants no permission: it only gives the classifier context for its own judgement. Your own `autoMode` block in `~/.claude/settings.json` is not touched; `claude auto-mode reset` resets that block, and does nothing to the pilot's.
+
+To see what the classifier is told, run `claude --settings ~/.claude/pilot/start-settings.json auto-mode config`; the merged environment lists your own lines first (if you have an `autoMode` block), then `"$defaults"`, then the pilot's lines.
+
+To turn the block off, start with `PILOT_CLASSIFIER_ENV`=off set in the environment. `CLASSIFIER_SWITCH` in `deck/run-env.mjs` names the variable, and it matches the value `off` exactly, case-sensitive: `OFF`, `0` or any other value keeps the block. With it off, the Start writes no `autoMode` entry. The deck's Start reads the deck process's environment, so to turn the block off for deck Starts, set the variable and restart the deck (for `pilot start`, it is the shell's environment).
+
 ## Which tests run when
 
 The full suite (`npm test`, every test file) runs once per feature, at `pilot land`. Every step before it tests only the selection: the test files the diff touches, the tests that import a changed module (directly or through others), the tests that name a changed file, and the whole-tree tests. `npm run test:changed -- --since=<ref>` runs that selection and prints `selected <n> of <m> test files since <sha7>`; where the diff touches `package.json`, the lockfile, the gate, the selector, or a script no test reaches, it runs the full suite and prints `full suite: <reason>`. Only a full run takes a gate slot.
@@ -50,9 +60,10 @@ A ticket whose signed plan has 2 slices or fewer takes the **short path**: the p
 
 | Step | Runs |
 | --- | --- |
-| a slice's phase gate, the fix round, QA, the lander's resolution | the selection (`npm run test:changed`) |
-| `pilot integrate` (the slice, the base, a resumed merge) | the selection since the start of the merge |
-| `pilot sync` | the selection |
+| a slice's phase gate | the selection at slice scope (`PILOT_TEST_SCOPE=slice`): a trigger file, a script no test reaches or an overlong selection runs the matched files and the whole-tree tests, cargo does not run (its row says `cargo: skipped`; integrate takes that row and runs no cargo, which runs at CI and at land), and the scope line ends `; deferred: <reason>, ...` |
+| the fix round, QA, the lander's resolution | the selection (`npm run test:changed`), wide |
+| `pilot integrate` (the slice, the base, a resumed merge) | the selection since the start of the merge, wide: what the phase gate deferred runs here |
+| `pilot sync` | the selection, wide |
 | `pilot land`'s merge of the feature into your pilot branch | the full suite, once |
 
 A repository with no `test:changed` script, or one tested by `git config pilot.test`, runs its own full test command at every step. The Linux referee and CI run `node scripts/gate.mjs`, full, unchanged (ADR 0166).
@@ -91,8 +102,8 @@ what the two devices share, and nothing else (ADR 0207):
 
 1. Git is the shared state: work moves between the devices only as pushed branches, your pilot branch and the PRs on the remote. Both devices sign in to
    the same account, so both derive the same `<login>-pilot` with nothing shared but git.
-2. Each device runs its own deck. Its tickets, threads and run records stay on that device; nothing syncs, exports or
-   commits them.
+2. Each device runs its own deck. Its tickets, threads and run records stay on that device; nothing syncs them, and
+   you move them only by hand (below).
 3. One device, the owner, holds the queue and lands on your pilot branch. Which one is your convention; no setting enforces it.
 4. The other device hands its work over as a pushed branch and a PR, never as deck data.
 
@@ -120,6 +131,27 @@ On device 2, in PowerShell on Windows or your login shell elsewhere:
 6. Check the device: `pilot doctor` in the clone shows no `fail` row. A `fail` row prints its fix below it; run that,
    then `pilot doctor` again.
 7. Start: `pilot start`. Leave the queue and the landings to the owner, and hand this device's work over as rule 4 says.
+
+### Moving the store to another device
+
+To carry the deck's tickets, threads, chats and run records to a new machine, export on the old one and import on the
+new one. Nothing syncs them (ADR 0230): a bundle moves only when you move it.
+
+1. On the old device: `pilot store export [<file>] [--logs]`. It writes one bundle of the portable store, never the
+   secret, the pids or a backup, and prints each open run's worktree that holds work not on its remote (uncommitted
+   changes or unpushed commits). Push those first; export writes the bundle either way. `--logs` adds the deck's logs.
+2. The old device's queue is now handed over: its next deck start warns that it may be owned elsewhere, and
+   `pilot doctor` shows an `exported` row with the time.
+3. Copy the bundle to the new device. Install pilot and clone the repository there as `### Setting up a second
+   device` says.
+4. On the new device, with no deck running: `pilot store import <bundle> --dry-run` prints what the import would
+   write and writes nothing. Then `pilot store import <bundle>`. `home` maps to this home and a drive root to the
+   same drive; any other root needs `--root <name>=<path>`. Over a store that already holds data, add `--replace`:
+   the old files are set aside under `replaced-<date>/`, never overwritten.
+5. Rebuild the worktrees: import prints one `git -C <repo> worktree add <worktree> <branch>` line for each open run
+   whose worktree is missing here, and creates none. Run the ones you want.
+6. Start the deck. Runs have no session, leases are released, and a landing that was running reads `interrupted on
+   <host>`; start it again.
 
 ## Moving to a fresh public repository
 

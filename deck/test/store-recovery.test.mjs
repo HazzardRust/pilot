@@ -128,9 +128,9 @@ test('a newer version is not recovered', (t) => {
   quiet(t);
   twoPosts();
   const bak = read(`${storeFile()}.bak`);
-  const newer = JSON.stringify({ version: 4, items: [] });
+  const newer = JSON.stringify({ version: 5, items: [] });
   fs.writeFileSync(storeFile(), newer);
-  assert.throws(() => listItems(), /is version 4, and this deck reads version 3/);
+  assert.throws(() => listItems(), /is version 5, and this deck reads version 4/);
   assert.equal(read(storeFile()).toString(), newer, 'the newer store stays where it is');
   assert.deepEqual(read(`${storeFile()}.bak`), bak, '.bak is untouched');
   assert.deepEqual(fs.readdirSync(storeFile().replace(/deck\.json$/, '')).filter((name) => name.includes('corrupt')), []);

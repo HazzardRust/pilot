@@ -15,6 +15,7 @@
  * under `deck/`, and the exit code it answers with is this process's.
  */
 
+import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
@@ -42,6 +43,7 @@ import { readUsageSwitch, setUsageSwitch } from '../deck/usage-switch.mjs';
 import { main as handoff } from '../scripts/handoff.mjs';
 import { main as deckStatus } from '../deck/status-command.mjs';
 import { main as integrate } from '../scripts/integrate.mjs';
+import { main as testCli } from '../scripts/test-cli.mjs';
 import { main as featurePr } from '../scripts/feature-pr.mjs';
 import { main as land } from '../scripts/land.mjs';
 import { main as landing } from '../deck/landing-wait.mjs';
@@ -60,7 +62,8 @@ import { look } from '../deck/look.mjs';
 import { main as listProcesses, processTable } from '../deck/procs.mjs';
 import { main as collectGarbage, deckPidNow, landSweep } from '../deck/gc.mjs';
 import { main as doctor, slugsWarning } from '../deck/doctor.mjs';
-import { main as restoreStore } from '../deck/store-restore.mjs';
+import { main as restoreStore, storePid } from '../deck/store-restore.mjs';
+import { exportStore, importStore } from '../deck/store-move.mjs';
 import { main as waitForReply } from '../deck/wait.mjs';
 import { main as waitForFile } from '../deck/wait-for.mjs';
 import { openPilot } from '../deck/session.mjs';
@@ -104,6 +107,9 @@ const usage = () => `pilot — the deck for piloted runs
                  in the feat/<slug> worktree, before the gate2: push the feature and try its
                  tip on pilot, merging nothing into it; prints on pilot: clean at <sha7>, the
                  sha the gate2 names, or exit 3 a conflict prepared for the lander
+  pilot test [--as <role>] [--scope slice] [--since <ref>]
+                 run the repository's tests (the selection since <ref>) and record the run in
+                 the test ledger; a green run of the same tree is reused: tests reused: <where> <sha7>
   pilot pr --ticket <itm_id>
                  the deck's write of a run's feature PR: open the draft feat/<slug> PR on the
                  record's base, or rewrite its body (spec and slice table) and base when they
@@ -227,6 +233,20 @@ const usage = () => `pilot — the deck for piloted runs
   pilot store restore
                  with the deck stopped: swap deck.json and deck.json.bak, keeping the
                  replaced store as deck.json.replaced-<date>; run it again to undo it
+  pilot store export [<file>] [--logs]
+                 write the store's portable part to one bundle (default
+                 pilot-store-<host>-<yyyy-mm-dd>.pilotstore here), never machine.json,
+                 deck.secret, deck.pid or a backup; --logs adds the deck's logs, as written,
+                 whatever they hold; threads travel as written too. Then list
+                 each open run's worktree with work on no remote, and landings in flight;
+                 exit 0 once written, whatever the list says
+  pilot store import <bundle> [--root <name>=<path>]... [--replace] [--dry-run]
+                 with the deck stopped: check the whole bundle (entry names, checksums,
+                 store version, every path under a root), then write it into this
+                 machine's store with a fresh machine.json; home maps to this home, a drive
+                 to the same drive, any other root needs --root. Refused over a store
+                 unless --replace, which keeps the old files under replaced-<date>/;
+                 --dry-run prints the entries and roots and writes nothing
   pilot doctor   on Windows, whether Defender's real-time scan sits in front of the projects
                  root (the repository's parent): off, on a Dev Drive in performance mode,
                  excluded, not, or cannot tell without an administrator, and the admin step
@@ -419,6 +439,11 @@ export async function run(argv, deps) {
     return undefined;
   }
 
+  if (command === 'test') {
+    process.exitCode = testCli(argv.slice(1));
+    return undefined;
+  }
+
   if (command === 'pr') {
     process.exitCode = await featurePr(argv.slice(1));
     return undefined;
@@ -584,6 +609,30 @@ export async function run(argv, deps) {
 
   if (command === 'store' && flag === 'restore') {
     process.exitCode = await restoreStore(argv.slice(2));
+    return undefined;
+  }
+
+  if (command === 'store' && flag === 'export') {
+    // git by argv, never a shell (portable-store S4); passed in, since a store module starts no process (ADR 0039).
+    const git = (args, cwd) => {
+      const run = spawnSync('git', args, { cwd, encoding: 'utf8', windowsHide: true, timeout: 30_000 });
+      return { status: run.status, stdout: run.stdout ?? '', stderr: run.stderr || run.error?.message || '' };
+    };
+    process.exitCode = exportStore(argv.slice(2), { git });
+    return undefined;
+  }
+
+  if (command === 'store' && flag === 'import') {
+    // Asked once before the import, which stays synchronous: null is "no deck serves", anything else refuses (L7).
+    // A failed ask is rethrown inside, so the "cannot tell" line keeps its reason.
+    let pid;
+    let failed;
+    try {
+      pid = await storePid();
+    } catch (error) {
+      failed = error;
+    }
+    process.exitCode = importStore(argv.slice(2), { storePid: () => { if (failed) throw failed; return pid; } });
     return undefined;
   }
 

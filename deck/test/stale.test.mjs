@@ -97,20 +97,27 @@ const writeStore = (dir, deck) =>
  * from.
  */
 function quietFor(dir, hours, { stamped = true } = {}) {
+  // `lastSeenAt` is machine state, kept in machine.json by run id (portable-store S2); `startedAt` stays in deck.json.
+  const machineFile = path.join(dir, 'machine.json');
+  const machine = JSON.parse(fs.readFileSync(machineFile, 'utf8'));
   const deck = readStore(dir);
   for (const run of deck.runs) {
     if (stamped) {
-      run.lastSeenAt = hoursAgo(hours);
+      machine.sessions[run.id].lastSeenAt = hoursAgo(hours);
     } else {
-      delete run.lastSeenAt;
+      delete machine.sessions[run.id].lastSeenAt;
       run.startedAt = hoursAgo(hours);
     }
   }
+  fs.writeFileSync(machineFile, JSON.stringify(machine));
   writeStore(dir, deck);
 }
 
 const ids = (runs) => runs.map((run) => run.id);
-const seenAt = (dir) => readStore(dir).runs.map((run) => run.lastSeenAt);
+const seenAt = (dir) => {
+  const { sessions } = JSON.parse(fs.readFileSync(path.join(dir, 'machine.json'), 'utf8'));
+  return readStore(dir).runs.map((run) => sessions[run.id]?.lastSeenAt);
+};
 const justNow = (when) => Date.now() - Date.parse(when) < 60_000;
 
 // --- 48 hours of silence (spec 7, D12) -------------------------------------

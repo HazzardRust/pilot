@@ -13,14 +13,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { repoKey } from '../items.mjs';
-import { aTicket, takeLive, tempDeck } from '../testUtils.mjs';
+import { aTicket, storedDeck, takeLive, tempDeck } from '../testUtils.mjs';
 
 // Destructured from the namespace, so a name this slice has yet to export fails only the tests that call it.
 const { DeckRefusal, cancelSwitch, listItems, refuseLaneSwitch, requestSwitch, storeFile, takeTicket } = await import('../store.mjs');
 
 const REPO = path.resolve('D:/work/pilot');
 
-const stored = () => JSON.parse(fs.readFileSync(storeFile(), 'utf8'));
+const stored = storedDeck;
 const liveOf = (id) => listItems().find((item) => item.id === id).live;
 const locked = (to) => (err) => err instanceof DeckRefusal && err.message.includes(to);
 

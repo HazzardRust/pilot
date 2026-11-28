@@ -28,8 +28,11 @@ import { archivedItems } from './store-archive.mjs';
 import { storeDir } from './store-dir.mjs';
 import { readDeckFile } from './store-recovery.mjs';
 
-/** The store files the archive never opens (spec 8, L9): they hold the secret or raw test output. */
-export const NEVER_SHOWN = ['deck.secret', 'deck-open.html', 'logs/*.log'];
+/**
+ * The store files the archive never opens (spec 8, L9): they hold the secret or raw test output, this machine's
+ * process state (F4), export mark and once-only notice marker, or a deck file set aside unread.
+ */
+export const NEVER_SHOWN = ['deck.secret', 'deck-open.html', 'logs/*.log', 'machine.json', 'deck.json.unreadable-*', 'exported.json', 'exported-noticed.json'];
 
 /**
  * Every record kind, a fixed list in file-name order (L4, moved by the user on itm_96d80caf8aee): a new kind adds
