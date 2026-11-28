@@ -33,13 +33,13 @@
     },
     {
       "slice": "S5 The gate stops failing on the green-tree reuse test",
-      "state": "pushed 1943b6e",
+      "state": "integrated",
       "branch": "feat/landed-pr-closed-s5",
       "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s5"
     }
   ],
-  "next": "co-pilot: S1, S4 integrated; S5 integrating; then S2 4809005, then S3 9f99218 (both touch deck/test/lineage-base.test.mjs); then fundamentalist and QA.",
-  "updatedAt": "2026-11-28T14:21:55.468Z",
+  "next": "co-pilot: S5 integrated e5a4c0b, checks waiting; then S2 4809005, then S3 9f99218; then fundamentalist and QA.",
+  "updatedAt": "2026-11-28T14:22:30.940Z",
   "friction": [
     {
       "agent": "architect",
