@@ -51,6 +51,8 @@ import { andList } from './tools.mjs';
 
 const STORE_FILENAME = 'deck.json';
 const STORE_VERSION = 4;
+/** The last version that holds absolute paths: what `upgradeStore` ends at and `upgradeV3` takes (portable-store L6). */
+const ABSOLUTE_PATHS_VERSION = 3;
 const roots = (machine) => rootsOf(machine, os.homedir(), hostPlatform()); // derived each call, overrides stored (L3)
 
 /**
@@ -205,7 +207,7 @@ export function upgradeStore(deck) {
     const swap = { green: 'red', red: 'green' };
     deck.items = deck.items.map((item) => (item?.kind === KIND_TICKET && Object.hasOwn(swap, item.state) ? { ...item, state: swap[item.state] } : item));
   }
-  deck.version = 3;
+  deck.version = ABSOLUTE_PATHS_VERSION;
   return deck;
 }
 

@@ -11,14 +11,14 @@ import os from 'node:os';
 import path from 'node:path';
 import zlib from 'node:zlib';
 
-import { PATH_FIELDS, toStored } from './store-codec.mjs';
+import { eachStructuredPath, toStored } from './store-codec.mjs';
 import { isDeck } from './store-recovery.mjs';
 
-export const BUNDLE_FORMAT = 1;
-export const BUNDLE_STORE_VERSION = 4;
+const BUNDLE_FORMAT = 1;
+const BUNDLE_STORE_VERSION = 4;
 
 /** The portable part (L4): every name a bundle may carry without `--logs`, with `/` separators. */
-export const ENTRY_NAMES = Object.freeze([
+const ENTRY_NAMES = Object.freeze([
   /^deck\.json$/,
   /^deck\.archive-\d{4}-\d{2}\.json$/,
   /^audits\/[A-Za-z0-9_-][A-Za-z0-9._-]*\/record\.json$/,
@@ -26,13 +26,12 @@ export const ENTRY_NAMES = Object.freeze([
 ]);
 
 /** The log names `--logs` adds (L4). */
-export const LOG_NAMES = Object.freeze([/^deck\.log$/, /^classifier\.log$/, /^usage\.jsonl$/, /^memory\.jsonl$/]);
+const LOG_NAMES = Object.freeze([/^deck\.log$/, /^classifier\.log$/, /^usage\.jsonl$/, /^memory\.jsonl$/]);
 
 const MONTH = ENTRY_NAMES[1];
-const STORED_ROOT = /^@([^/\\]+)\//;
 
 /** Whether `name` is one a bundle may carry (L4); `logs` admits the log names too. */
-export const allowedEntry = (name, { logs = false } = {}) =>
+const allowedEntry = (name, { logs = false } = {}) =>
   [...ENTRY_NAMES, ...(logs ? LOG_NAMES : [])].some((pattern) => pattern.test(name));
 
 const sha256 = (text) => crypto.createHash('sha256').update(text, 'utf8').digest('hex');
@@ -57,20 +56,6 @@ function candidateNames(dir) {
   return [...own, ...auditDirs];
 }
 
-/** The root names the stored paths of `value` use, keys and strings alike, so an import knows which it must map. */
-function rootsIn(value, into) {
-  if (typeof value === 'string') {
-    const match = STORED_ROOT.exec(value);
-    if (match) into.add(match[1]);
-  } else if (value !== null && typeof value === 'object') {
-    for (const [key, entry] of Object.entries(value)) {
-      if (!Array.isArray(value)) rootsIn(key, into);
-      rootsIn(entry, into);
-    }
-  }
-  return into;
-}
-
 /**
  * The bundle of the store in `dir` (spec 4, 12): `bytes`, the gzipped `{ manifest, entries }`, and its `manifest`.
  * `deck.json` must be a version 4 store, since only that holds stored paths; it travels with no machine state, even
@@ -93,15 +78,12 @@ export function packBundle(dir, { logs = false, host = os.hostname(), now = new 
   entries['deck.json'] = `${JSON.stringify(stored, null, 2)}\n`;
 
   const months = Object.keys(entries).filter((name) => MONTH.test(name));
-  const roots = rootsIn(stored, new Set());
-  for (const name of months) rootsIn(JSON.parse(entries[name]), roots);
   const manifest = {
     format: BUNDLE_FORMAT,
     storeVersion: BUNDLE_STORE_VERSION,
     host,
     exportedAt: now.toISOString(),
     counts: { items: stored.items.length, records: Array.isArray(stored.records) ? stored.records.length : 0, archives: months.length },
-    roots: [...roots].sort(),
     entries: Object.fromEntries(Object.entries(entries).map(([name, text]) => [name, sha256(text)])),
   };
   return { bytes: zlib.gzipSync(JSON.stringify({ manifest, entries })), manifest };
@@ -115,20 +97,6 @@ const UNSAFE_DIR = /^(con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³])(\.|$)|\.$/i
 
 const isMap = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const climbs = (rel) => rel.split(/[\\/]/).includes('..');
-const stepsOf = (field) => field.split('.').flatMap((part) => (part.endsWith('[]') || part.endsWith('{}') ? [part.slice(0, -2), part.slice(-2)] : [part]));
-const FIELD_STEPS = PATH_FIELDS.map((field) => [field, stepsOf(field)]);
-
-/** Calls `visit(value, field)` for every string at a structured path of `doc` and every key of a path-keyed map (F2). */
-export function eachStructuredPath(doc, visit) {
-  const walk = (value, steps, field) => {
-    if (steps.length === 0) return typeof value === 'string' && visit(value, field);
-    const [step, ...rest] = steps;
-    if (step === '[]') return Array.isArray(value) && value.forEach((entry) => walk(entry, rest, field));
-    if (step === '{}') return isMap(value) && Object.keys(value).forEach((key) => visit(key, field));
-    if (isMap(value) && Object.hasOwn(value, step)) walk(value[step], rest, field);
-  };
-  for (const [field, steps] of FIELD_STEPS) walk(doc, steps, field);
-}
 
 /** `text` parsed as JSON, or a throw naming the entry. */
 function parsedEntry(name, text) {
@@ -169,8 +137,8 @@ function checkedRoots(name, doc, roots) {
  * The bundle in `bytes` opened and checked, writing nothing (spec 5; L4, L5): the gunzipped size within `maxBytes`, the
  * format, store version 4, every entry name on the allowlist (logs included), every sha256 matching, `deck.json` a deck,
  * and every structured path of `deck.json` and each month archive stored under a root with no `..` and none absolute.
- * Returns the `manifest` as written, the `entries` as bytes, and the `roots` the structured paths use (the manifest's
- * own list also counts prose, so it is not what an import must map). Throws naming the check that failed.
+ * Returns the `manifest` as written, the `entries` as bytes, and the `roots` the structured paths use, which an import
+ * must map. Throws naming the check that failed.
  */
 export function unpackBundle(bytes, { maxBytes }) {
   if (bytes.length > maxBytes) throw new Error(`size: the bundle is ${bytes.length} bytes, over the bound of ${maxBytes}`);

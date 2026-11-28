@@ -97,6 +97,22 @@ test("a bundle's branch reaches the rebuild line quoted, or not at all", () => {
   assert.deepEqual(rebuildLines(runs('--force'), () => false), [], 'an argument git would read as an option gets no line');
 });
 
+test('on win32 a branch PowerShell or cmd would split or chain gets no rebuild line', { skip: process.platform !== 'win32' }, () => {
+  const runs = (branch) => ({ runs: [{ id: 'run_a', repo: path.resolve(os.tmpdir(), 'pilot-gone-r'), worktree: path.resolve(os.tmpdir(), 'pilot-gone-wt'), branch }] });
+  assert.equal(rebuildLines(runs('feat/plain'), () => false).length, 1, 'a plain branch still gets its line');
+  for (const branch of ['x" -c core.fsmonitor=calc "', 'feat/a&calc', 'feat/a|calc', 'feat/a<b', 'feat/a>b', 'feat/a^b', 'feat/%PATH%']) {
+    assert.deepEqual(rebuildLines(runs(branch), () => false), [], branch);
+  }
+  const hostileRepo = { runs: [{ id: 'run_a', repo: path.resolve(os.tmpdir(), 'r&calc'), worktree: path.resolve(os.tmpdir(), 'pilot-gone-wt'), branch: 'feat/plain' }] };
+  assert.deepEqual(rebuildLines(hostileRepo, () => false), [], 'the repository is held to it too');
+});
+
+test('invisible characters a bundle carries print as ?', () => {
+  const deck = { items: [{ id: 'itm_a', replies: [], landing: { state: 'running', pid: 1 } }] };
+  const hidden = [0x00ad, 0x061c, 0x200b, 0x200c, 0x200d, 0x2060, 0xfeff].map((code) => String.fromCodePoint(code)).join('');
+  assert.equal(markGone(deck, `ho${hidden}st`, AT).items[0].landing.line.split(':')[0], 'landing interrupted on ho???????st');
+});
+
 test('an import marks the landing interrupted and prints the rebuild line', (t) => {
   tempDeck(t);
   const repo = aDir(t, 'repo');

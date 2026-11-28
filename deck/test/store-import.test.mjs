@@ -175,4 +175,8 @@ test('an import is refused while a deck serves the store, or when that cannot be
     assert.notEqual(code, 0, said);
     assert.deepEqual(snapshot(dir), before);
   }
+  const { code, said } = anImport([file], home, { storePid: () => { throw new Error('deck.pid cannot be read'); } });
+  assert.equal(code, 1);
+  assert.match(said, /cannot tell whether a deck daemon serves this store \(deck\.pid cannot be read\)/, 'the reason is kept');
+  assert.deepEqual(snapshot(dir), before);
 });

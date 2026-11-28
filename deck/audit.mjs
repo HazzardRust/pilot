@@ -13,7 +13,7 @@ import path from 'node:path';
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
 import { hostPlatform } from '../hooks/lib/platform.js';
 import { repoKey } from './items.mjs';
-import { defaultRoots, encodePath } from './store-codec.mjs';
+import { defaultRoots, encodePath, realOf } from './store-codec.mjs';
 import { storeDir } from './store.mjs';
 import { zeroCounts } from './transcripts.mjs';
 
@@ -255,17 +255,8 @@ const nameOf = (key) => {
  * identity, so a link and its target are one folder: on macOS a session's cwd is /var/... while process.cwd()
  * is /private/var/..., and encodePath keeps a link's spelling (store-codec `caseOnly`).
  */
-const identity = (p) => {
-  if (path.resolve(p) !== path.normalize(p)) return p; // another flavour (a fixture) or not absolute: as given
-  // A missing path takes its deepest existing ancestor's realpath, so its name does not move once it is made.
-  for (let dir = p, rest = []; ; rest.unshift(path.basename(dir)), dir = path.dirname(dir)) {
-    try {
-      return path.join(fs.realpathSync.native(dir), ...rest);
-    } catch (error) {
-      if (!['ENOENT', 'ENOTDIR'].includes(error.code) || path.dirname(dir) === dir) return p;
-    }
-  }
-};
+// Another flavour (a fixture) or not absolute: as given. A missing path's name does not move once it is made (`realOf`).
+const identity = (p) => (path.resolve(p) !== path.normalize(p) ? p : realOf(p));
 
 /** A repository's audit folder name, from its stored path (portable-store S3), so it is one name on every machine. */
 export const directoryFor = (repo, roots = defaultRoots(os.homedir(), hostPlatform())) =>

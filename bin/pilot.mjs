@@ -624,13 +624,15 @@ export async function run(argv, deps) {
 
   if (command === 'store' && flag === 'import') {
     // Asked once before the import, which stays synchronous: null is "no deck serves", anything else refuses (L7).
+    // A failed ask is rethrown inside, so the "cannot tell" line keeps its reason.
     let pid;
+    let failed;
     try {
       pid = await storePid();
-    } catch {
-      pid = undefined;
+    } catch (error) {
+      failed = error;
     }
-    process.exitCode = importStore(argv.slice(2), { storePid: () => pid });
+    process.exitCode = importStore(argv.slice(2), { storePid: () => { if (failed) throw failed; return pid; } });
     return undefined;
   }
 

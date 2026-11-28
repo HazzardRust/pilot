@@ -8,12 +8,13 @@ import path from 'node:path';
 
 import { hostPlatform, pathKey } from '../hooks/lib/platform.js';
 
-const IN_FLIGHT = new Set(['running', 'queued']);
+export const IN_FLIGHT = new Set(['running', 'queued']);
 const isMap = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
-// Control characters, and the ones that reorder or break the text around them (bidi marks, line and paragraph separators).
-const UNPRINTABLE = [[0x00, 0x1f], [0x7f, 0x9f], [0x200e, 0x200f], [0x2028, 0x2029], [0x202a, 0x202e], [0x2066, 0x2069]];
+// Control characters, the ones that reorder or break the text around them (bidi marks, line and paragraph separators),
+// and the invisible ones (soft hyphen, Arabic letter mark, zero-width space and joiners, word joiner, BOM).
+const UNPRINTABLE = [[0x00, 0x1f], [0x7f, 0x9f], [0xad, 0xad], [0x61c, 0x61c], [0x200b, 0x200f], [0x2028, 0x2029], [0x202a, 0x202e], [0x2060, 0x2060], [0x2066, 0x2069], [0xfeff, 0xfeff]];
 // A bundle's own strings reach the terminal: none of those characters do.
-const printable = (text) => [...String(text)].map((char) => (UNPRINTABLE.some(([from, to]) => char.codePointAt(0) >= from && char.codePointAt(0) <= to) ? '?' : char)).join('');
+export const printable = (text) => [...String(text)].map((char) => (UNPRINTABLE.some(([from, to]) => char.codePointAt(0) >= from && char.codePointAt(0) <= to) ? '?' : char)).join('');
 
 /**
  * `deck` with each landing still `running` or `queued` set to `interrupted`, its pid dropped and a deck line on its
@@ -45,6 +46,9 @@ const shellArg = (text, platform) => {
   return platform === 'win32' ? `'${text.replace(PS_QUOTES, '$&$&')}'` : `'${text.replace(/'/g, "'\\''")}'`;
 };
 
+// On win32 a `"` splits the argv PowerShell 5.1 hands git, and cmd.exe ignores `'`, so these chain or redirect there.
+const CMD_SPECIAL = /["&|<>^%]/;
+
 /** Each worktree a row names with the branch it was on: the feature's (`feat/<slug>` when none is recorded), QA's, each slice's. */
 const worktreesOf = (row) => [
   { worktree: row.worktree, branch: row.branch ?? (typeof row.slug === 'string' ? `feat/${row.slug}` : undefined) },
@@ -53,22 +57,31 @@ const worktreesOf = (row) => [
 ];
 
 /**
- * One `git -C <repo> worktree add <worktree> <branch>` per worktree an open run (a run row, or an unfinished record)
- * names that `exists` says is missing here, once each; one with no repository or branch to name, or an argument git
- * would read as an option, gets none.
+ * Every absolute worktree an open run (a run row, or an unfinished record) names (spec 9, 11), as
+ * `{ repo, worktree, branch }` in deck order, not deduplicated: the feature's, QA's and each slice's.
+ */
+export function openWorktrees(deck) {
+  const rows = [...(Array.isArray(deck?.runs) ? deck.runs : []), ...(Array.isArray(deck?.records) ? deck.records.map((entry) => isMap(entry?.record) && { ...entry.record, repo: entry.repo }) : [])];
+  return rows
+    .filter((row) => isMap(row) && row.finished === undefined)
+    .flatMap((row) => worktreesOf(row).map(({ worktree, branch }) => ({ repo: row.repo, worktree, branch })))
+    .filter(({ worktree }) => typeof worktree === 'string' && path.isAbsolute(worktree));
+}
+
+/**
+ * One `git -C <repo> worktree add <worktree> <branch>` per open worktree that `exists` says is missing here, once
+ * each; one with no repository or branch to name, an argument git would read as an option, or on win32 one
+ * CMD_SPECIAL matches, gets none.
  */
 export function rebuildLines(deck, exists) {
-  const rows = [...(Array.isArray(deck?.runs) ? deck.runs : []), ...(Array.isArray(deck?.records) ? deck.records.map((entry) => isMap(entry?.record) && { ...entry.record, repo: entry.repo }) : [])];
+  const win32 = hostPlatform() === 'win32';
   const seen = new Set();
   const lines = [];
-  for (const row of rows) {
-    if (!isMap(row) || row.finished !== undefined || typeof row.repo !== 'string') continue;
-    for (const { worktree, branch } of worktreesOf(row)) {
-      if (typeof worktree !== 'string' || !path.isAbsolute(worktree) || typeof branch !== 'string' || branch === '') continue;
-      if ([row.repo, worktree, branch].some((arg) => arg.startsWith('-')) || seen.has(pathKey(worktree)) || exists(worktree)) continue;
-      seen.add(pathKey(worktree));
-      lines.push(`git -C ${[row.repo, 'worktree', 'add', worktree, branch].map((arg) => shellArg(printable(arg), hostPlatform())).join(' ')}`);
-    }
+  for (const { repo, worktree, branch } of openWorktrees(deck)) {
+    if (typeof repo !== 'string' || repo === '' || typeof branch !== 'string' || branch === '') continue;
+    if ([repo, worktree, branch].some((arg) => arg.startsWith('-') || (win32 && CMD_SPECIAL.test(arg))) || seen.has(pathKey(worktree)) || exists(worktree)) continue;
+    seen.add(pathKey(worktree));
+    lines.push(`git -C ${[repo, 'worktree', 'add', worktree, branch].map((arg) => shellArg(printable(arg), hostPlatform())).join(' ')}`);
   }
   return lines;
 }

@@ -14,14 +14,13 @@ import path from 'node:path';
 import { atomicWriteFileSync } from '../hooks/lib/atomic-write.js';
 import { hostPlatform, pathKey } from '../hooks/lib/platform.js';
 import { emptyMachine, readMachine, rootsOf, writeMachine } from './machine.mjs';
-import { ROOT_NAME, eachStructuredPath, packBundle, storeEntries, unpackBundle } from './store-bundle.mjs';
-import { decodePath, defaultRoots, fromStored } from './store-codec.mjs';
+import { ROOT_NAME, packBundle, storeEntries, unpackBundle } from './store-bundle.mjs';
+import { defaultRoots, fromStored } from './store-codec.mjs';
 import { refuseGateHomeWrite, storeDir } from './store-dir.mjs';
-import { markGone, rebuildLines } from './store-gone.mjs';
+import { IN_FLIGHT, markGone, openWorktrees, printable, rebuildLines } from './store-gone.mjs';
 import { localDay, setAside } from './store-recovery.mjs';
 
 const USAGE = 'usage: pilot store export [<file>] [--logs]';
-const IN_FLIGHT = new Set(['running', 'queued']);
 
 /** The flags of `argv`: the bundle file (or undefined for the default name) and `--logs`. Throws the usage. */
 function parseArgs(argv) {
@@ -35,30 +34,12 @@ function parseArgs(argv) {
   return { file, logs };
 }
 
-const isMap = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
-const worktreesOf = (row) => [row?.worktree, row?.qa?.worktree, ...(Array.isArray(row?.slices) ? row.slices.map((slice) => slice?.worktree) : [])];
-
-/**
- * Every worktree an open run names (spec 9): a run row's, and an unfinished record's, its feature worktree, QA's and
- * each slice's, absolute and existing here, once each by `pathKey`.
- */
-function openWorktrees(deck) {
-  const rows = [...(Array.isArray(deck.runs) ? deck.runs : []), ...(Array.isArray(deck.records) ? deck.records.map((entry) => entry?.record) : [])];
-  const seen = new Map();
-  for (const row of rows) {
-    if (!isMap(row) || row.finished !== undefined) continue;
-    for (const worktree of worktreesOf(row)) {
-      if (typeof worktree !== 'string' || !path.isAbsolute(worktree) || !fs.existsSync(worktree)) continue;
-      if (!seen.has(pathKey(worktree))) seen.set(pathKey(worktree), worktree);
-    }
-  }
-  return [...seen.values()];
-}
-
-/** One line per open worktree holding work no remote has (spec 9), or saying git could not tell. */
+/** One line per open worktree here, once each by `pathKey`, holding work no remote has (spec 9), or saying git could not tell. */
 function unpushedLines(deck, git) {
+  const here = new Map();
+  for (const { worktree } of openWorktrees(deck)) if (!here.has(pathKey(worktree)) && fs.existsSync(worktree)) here.set(pathKey(worktree), worktree);
   const lines = [];
-  for (const worktree of openWorktrees(deck)) {
+  for (const worktree of here.values()) {
     const status = git(['status', '--porcelain'], worktree);
     const ahead = git(['rev-list', '--count', 'HEAD', '--not', '--remotes'], worktree);
     if (status.status !== 0 || ahead.status !== 0) {
@@ -138,7 +119,7 @@ export function exportStore(argv, { git, now = () => new Date(), host = os.hostn
 const IMPORT_USAGE = 'usage: pilot store import <bundle> [--root <name>=<path>]... [--replace] [--dry-run]';
 
 /** The most a bundle may weigh or open to (L4): far above a real store (its deck.json is about 6 MB), far below a string's limit. */
-export const MAX_BUNDLE_BYTES = 256 * 1024 * 1024;
+const MAX_BUNDLE_BYTES = 256 * 1024 * 1024;
 
 const flavour = (platform) => (platform === 'win32' ? path.win32 : path.posix);
 
@@ -180,25 +161,18 @@ function mappedRoots(used, given, { home, platform, hasDrive }) {
 }
 
 /**
- * Every stored path of `deck.json` and each month archive decoded against `roots`, and refused unless it stays under
- * its root (L5); first each is read as the deck will read it, so one the deck could not load (two map keys that read
- * as one path) is refused before the store it would replace is set aside.
+ * `deck.json` and each month archive read as the deck will read them against `roots`, so one the deck could not load
+ * (a stored path off its root, two map keys that read as one path) is refused before the store it would replace is
+ * set aside (L5).
  */
-function checkDecoded(entries, roots, P) {
+function checkDecoded(entries, roots) {
   for (const [name, bytes] of entries) {
     if (name !== 'deck.json' && !name.startsWith('deck.archive-')) continue;
-    const doc = JSON.parse(bytes.toString('utf8'));
     try {
-      fromStored(doc, emptyMachine(), roots);
+      fromStored(JSON.parse(bytes.toString('utf8')), emptyMachine(), roots);
     } catch (error) {
       throw new Error(`load: ${name} would not load here (${error.message})`);
     }
-    eachStructuredPath(doc, (value, field) => {
-      if (!value.startsWith('@')) return;
-      const root = roots[value.slice(1, value.indexOf('/'))];
-      const rel = P.relative(root, decodePath(value, roots));
-      if (rel === '..' || rel.startsWith(`..${P.sep}`) || P.isAbsolute(rel)) throw new Error(`stored path: ${name} ${field} ${JSON.stringify(value)} reads outside its root ${root}`);
-    });
   }
 }
 
@@ -226,7 +200,12 @@ function setStoreAside(dir, names, at) {
 function importPlan(argv, { storePid, home, platform, hasDrive, maxBytes }) {
   const P = flavour(platform);
   const parsed = parseImportArgs(argv, P);
-  const pid = storePid();
+  let pid;
+  try {
+    pid = storePid();
+  } catch (error) {
+    throw new Error(`cannot tell whether a deck daemon serves this store (${error.message})`);
+  }
   if (pid === undefined) throw new Error('cannot tell whether a deck daemon serves this store');
   if (pid !== null) throw new Error(`deck daemon ${pid} serves this store; stop it first, then import`);
   const file = path.resolve(parsed.file);
@@ -234,7 +213,7 @@ function importPlan(argv, { storePid, home, platform, hasDrive, maxBytes }) {
   if (size > maxBytes) throw new Error(`size: ${file} is ${size} bytes, over the bound of ${maxBytes}`);
   const bundle = unpackBundle(fs.readFileSync(file), { maxBytes });
   const roots = mappedRoots(bundle.roots, parsed.given, { home, platform, hasDrive });
-  checkDecoded(bundle.entries, roots, P);
+  checkDecoded(bundle.entries, roots);
   const dir = storeDir();
   const existing = fs.existsSync(dir) ? storeEntries(dir) : [];
   if (existing.length > 0 && !parsed.replace) {
@@ -260,7 +239,7 @@ export function importStore(argv, deps = {}) {
     plan = importPlan(argv, { storePid, home, platform, hasDrive, maxBytes });
   } catch (error) {
     // A parse error quotes the bundle's own bytes: none of its control characters reach the terminal.
-    err(`pilot store import: ${error.message.replace(/[\x00-\x1f\x7f-\x9f]/g, '?')}; nothing written`);
+    err(`pilot store import: ${printable(error.message)}; nothing written`);
     return 1;
   }
   const { file, dir, bundle, roots, existing, given } = plan;

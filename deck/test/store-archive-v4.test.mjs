@@ -82,9 +82,10 @@ test('a backup that cannot be written leaves the month file as it was', (t) => {
   tempDeck(t);
   const file = seedMonth();
   const before = fs.readFileSync(file, 'utf8');
-  const day = new Date();
-  const local = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
-  fs.mkdirSync(`${file}.v3-${local}`); // a folder in the backup's place: the link fails and the read of it fails
+  // A disk that takes neither a link nor a copy beside the file.
+  const refuse = () => { throw Object.assign(new Error('EPERM: operation not permitted'), { code: 'EPERM' }); };
+  t.mock.method(fs, 'linkSync', refuse);
+  t.mock.method(fs, 'copyFileSync', refuse);
 
   assert.throws(() => migrateMonthFile(file, roots()), /backed up/);
   assert.equal(fs.readFileSync(file, 'utf8'), before);

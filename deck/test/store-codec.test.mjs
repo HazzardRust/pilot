@@ -28,6 +28,8 @@ test('a path round-trips through its root', () => {
 
   assert.throws(() => decodePath('@home/../x', win), /climbs out/);
   assert.throws(() => decodePath('@home/a\\..\\..\\x', win), /climbs out/, 'a backslash is a separator too');
+  assert.throws(() => decodePath('@home/C:/Windows', win), /reads outside its root/, 'a drive segment is not a name under the root');
+  assert.equal(decodePath('@home/C:/x', posix), '/home/a/C:/x', 'off win32 a colon is a character of the name');
   assert.throws(() => decodePath('@elsewhere/x', posix), /does not have/);
   assert.throws(() => decodePath('C:\\Users\\a\\x', win), /not a stored path/);
   assert.equal(encodePath('relative/dir', win), 'relative/dir', 'what is not absolute is not a path to store');

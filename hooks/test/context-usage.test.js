@@ -1048,6 +1048,17 @@ test('the number on the line is the one the deck minted for this directory', asy
   });
 });
 
+test('a stored key under a root the machine file names reads against that root', async function () {
+  const home = makeHome();
+  const dir = path.join(home, '.claude', 'pilot');
+  const work = path.join(home, 'elsewhere');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'machine.json'), JSON.stringify({ roots: { work: work } }));
+  await withDeckDir(dir, async function () {
+    assert.strictEqual(statusline.deckNumberFor({ decks: { '@work/pilot': 3 } }, path.join(work, 'pilot')), 3);
+  });
+});
+
 test('a deck that is absent, corrupt or older than the numbering shows no number', function () {
   const dir = path.join('D:', 'work', 'pilot');
   const gone = path.join(os.tmpdir(), 'pilot-deck-does-not-exist', 'deck.json');

@@ -173,6 +173,22 @@ _Avoid_: Action, todo
 The deck's JSON on disk in the pilot's folder of the user's Claude home. The daemon is its only writer.
 _Avoid_: Database, state file
 
+**Bundle**:
+The one file `pilot store export` writes and `pilot store import` reads.
+_Avoid_: Archive, which is the month archive (`deck.archive-YYYY-MM.json`)
+
+**Root**:
+A named absolute directory of this machine (`home`, `drive-c`, `/`, or one given with `--root`).
+
+**Stored path**:
+`@<root>/<rel>` with `/` separators, never `..`; what the store holds for a path.
+
+**Machine file**:
+The file beside the store holding its machine-bound state plus root overrides; a bundle never carries it.
+
+**Portable part**:
+The store-dir entries a bundle may carry, nothing else.
+
 **Deck number**:
 `D‹n›`, minted once for a working-directory path from a monotonic counter in the store and never reused; the canonical address of a deck, so "S2 in D4" names a slice.
 _Avoid_: Run id, tab index

@@ -57,6 +57,23 @@ const rootDir = (name, roots) => {
   return drive ? `${drive[1].toUpperCase()}:\\` : undefined;
 };
 
+/**
+ * `abs` resolved as its realpath, a host path only. A missing path takes its deepest existing ancestor's realpath,
+ * so it meets a root spelled through a link or an 8.3 name (C:\Users\RUNNER~1) the way the root itself is spelled;
+ * only a missing ancestor is walked past, so with none readable, or on any other error (EACCES, ELOOP), it keeps
+ * its resolved spelling.
+ */
+export function realOf(abs, P = hostPlatform() === 'win32' ? path.win32 : path.posix) {
+  const resolved = P.resolve(abs);
+  for (let dir = resolved, rest = []; ; rest.unshift(P.basename(dir)), dir = P.dirname(dir)) {
+    try {
+      return P.join(fs.realpathSync.native(dir), ...rest);
+    } catch (error) {
+      if (!['ENOENT', 'ENOTDIR'].includes(error.code) || P.dirname(dir) === dir) return resolved;
+    }
+  }
+}
+
 const SPELLED = new Map();
 const SPELLED_MAX = 8192;
 
@@ -70,19 +87,7 @@ function spelled(abs, P) {
   const resolved = P.resolve(abs);
   if (P !== (hostPlatform() === 'win32' ? path.win32 : path.posix)) return resolved;
   if (SPELLED.has(resolved)) return SPELLED.get(resolved);
-  // A missing path takes its deepest existing ancestor's realpath, so it meets a root spelled through a link or an
-  // 8.3 name (C:\Users\RUNNER~1) the way the root itself is spelled; with no readable ancestor it keeps its spelling.
-  let real = resolved;
-  for (let dir = resolved, rest = []; ; rest.unshift(P.basename(dir)), dir = P.dirname(dir)) {
-    try {
-      real = P.join(fs.realpathSync.native(dir), ...rest);
-      break;
-    } catch (error) {
-      // Only a missing ancestor is walked past; anything else (EACCES, ELOOP) keeps the given spelling.
-      if (!['ENOENT', 'ENOTDIR'].includes(error.code) || P.dirname(dir) === dir) break;
-    }
-  }
-  const kept = caseOnly(resolved, real, P);
+  const kept = caseOnly(resolved, realOf(resolved, P), P);
   if (SPELLED.size >= SPELLED_MAX) SPELLED.clear();
   SPELLED.set(resolved, kept);
   return kept;
@@ -127,7 +132,10 @@ export function encodePath(abs, roots) {
   return `@${best.name}/${real.slice(best.base.length).split(P.sep).join('/')}`;
 }
 
-/** A stored path as the absolute path it names here; throws on a non-stored value, `..`, or an unknown root (L5). */
+/**
+ * A stored path as the absolute path it names here; throws on a non-stored value, `..`, a drive segment on win32
+ * (`@home/C:/Windows`), or an unknown root (L5).
+ */
 export function decodePath(stored, roots) {
   const match = typeof stored === 'string' ? STORED.exec(stored) : null;
   if (!match) throw new Error(`not a stored path: ${JSON.stringify(stored)}`);
@@ -138,6 +146,7 @@ export function decodePath(stored, roots) {
   // A backslash separates on win32 only; under a posix root it is a character of the name, as encodePath kept it.
   const segments = rel.split(P === path.win32 ? /[\\/]/ : '/');
   if (segments.includes('..')) throw new Error(`stored path ${stored} climbs out of its root`);
+  if (P === path.win32 && segments.some((segment) => /^[A-Za-z]:/.test(segment))) throw new Error(`stored path ${stored} reads outside its root ${dir}`);
   return P.join(dir, ...segments.filter(Boolean));
 }
 
@@ -167,6 +176,14 @@ function mapAt(value, steps, change, field) {
 }
 
 const eachField = (deck, changeFor) => PATH_FIELDS.reduce((next, field) => mapAt(next, stepsOf(field), changeFor(field), field), deck);
+
+/** Calls `visit(value, field)` for every string at a structured path of `doc` and every key of a path-keyed map (F2). */
+export function eachStructuredPath(doc, visit) {
+  eachField(doc, (field) => (value) => {
+    if (typeof value === 'string') visit(value, field);
+    return value;
+  });
+}
 const encoded = (deck, roots) => eachField(deck, () => (value) => (typeof value === 'string' ? encodePath(value, roots) : value));
 
 /** A run's fields that name this machine's process (F4), kept in the machine file by run id. */
@@ -232,6 +249,5 @@ export function fromStored(stored, machine, roots) {
 
 /** Version 3 to version 4 (L6): the same deck with its paths stored against `roots`; its machine state moves at the next write. */
 export function upgradeV3(deck, roots) {
-  if (deck.version !== 3) throw new Error(`upgradeV3 takes a version 3 deck, not version ${deck.version}`);
   return { ...encoded(deck, roots), version: 4 };
 }

@@ -196,10 +196,12 @@ L7 itm_dff14db22111; L8 itm_5156b85885e2; L4 had no walk item, A5's question (it
   given one by case (`projects` stores as `Projects`); a junction, symlink, 8.3 name (`RUNNER~1`) or macOS `/var`
   keeps its given spelling and reads back as it, since the full realpath changed a worktree's spelling across a
   store round trip (CI at fae3569). Map keys still collapse (`pathKey` in memory); a field such as `items[].repo`
-  given in two link spellings stores two, and an audit folder (S3) is named once per link spelling. Only a path
+  given in two link spellings stores two. Only a path
   absolute in the roots' own flavour is encoded; anything else is stored and read back as it is. Windows
   consequence (L2 either way, F8): a repo reads back native (`C:\work\alpha` for `C:/work/alpha`), so the API's
   repo spelling is native and a Rune fold saved under a forward-slash spelling resets once after the upgrade.
+  Audit folder names take the full realpath (`realOf`, the macOS link fix 4364c19), so a link and its target
+  share one folder; stored paths keep A8's case-only rule.
   Rejected: L2 as signed, the realpath always (~15 test files move to real paths; a restart re-spells
   worktrees; not undoable for a migrated store). Question itm_ad2385df32fa (2026-11-25): closed "B: collapse case
   only", a deck default after 20 min with no answer, not the user's press. Re-asked at the re-cut as

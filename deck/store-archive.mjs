@@ -17,7 +17,7 @@ import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
 import { hostPlatform } from '../hooks/lib/platform.js';
 import { isOpen } from './items.mjs';
 import { readDeck, writeDeck } from './store-core.mjs';
-import { localDay } from './store-recovery.mjs';
+import { setAside } from './store-recovery.mjs';
 import { emptyMachine } from './machine.mjs';
 import { defaultRoots, fromStored, toStored } from './store-codec.mjs';
 import { storeDir } from './store-dir.mjs';
@@ -36,7 +36,7 @@ const monthFile = (month) => path.join(storeDir(), `deck.archive-${month}.json`)
 
 const roots = () => defaultRoots(os.homedir(), hostPlatform()); // derived each call, never stored (portable-store L3)
 
-/** A month file as stored: its bytes and parse. A missing file is `null`; one that does not parse is refused, never overwritten. */
+/** A month file as stored, parsed. A missing file is `null`; one that does not parse is refused, never overwritten. */
 function parseMonth(file) {
   let raw;
   try {
@@ -52,7 +52,7 @@ function parseMonth(file) {
     throw new Error(`deck archive ${file} is not readable JSON (${err.message}); it has been left untouched`);
   }
   if (!Array.isArray(archive?.items)) throw new Error(`deck archive ${file} has no list of items; it has been left untouched`);
-  return { raw, archive };
+  return { archive };
 }
 
 /** A month file's items with absolute paths, as a version 3 or 4 file holds them; a missing file holds none. */
@@ -63,29 +63,6 @@ function readMonth(file) {
     return monthFrom(month.archive, roots()).items;
   } catch (err) {
     throw new Error(`deck archive ${file} holds a path this deck cannot read (${err.message}); it has been left untouched`);
-  }
-}
-
-/** `file`'s bytes beside it as `<file>.v3-<date>`, whole or absent, never over another copy (the `-2` suffix on other bytes). */
-function backUp(file, raw) {
-  const tmp = `${file}.${process.pid}.tmp`;
-  let backup = `${file}.v3-${localDay()}`;
-  try {
-    fs.writeFileSync(tmp, raw, 'utf8');
-    for (let n = 2; ; n += 1) {
-      try {
-        fs.linkSync(tmp, backup);
-        return;
-      } catch (err) {
-        if (err.code !== 'EEXIST') throw err;
-        if (fs.readFileSync(backup, 'utf8') === raw) return;
-      }
-      backup = `${file}.v3-${localDay()}-${n}`;
-    }
-  } catch (err) {
-    throw new Error(`deck archive ${file} could not be backed up to ${backup} (${err.message}), so it was not rewritten`);
-  } finally {
-    fs.rmSync(tmp, { force: true });
   }
 }
 
@@ -103,7 +80,11 @@ export function migrateMonthFile(file, roots) {
   }
   const stored = monthTo(month.archive, roots);
   if (JSON.stringify(stored) === JSON.stringify(month.archive)) return false;
-  backUp(file, month.raw);
+  try {
+    setAside(file, 'v3'); // `<file>.v3-<date>[-n]`, never over another copy
+  } catch (err) {
+    throw new Error(`deck archive ${file} could not be backed up (${err.message}), so it was not rewritten`);
+  }
   atomicWriteFileSync(file, `${JSON.stringify(stored, null, 2)}\n`);
   return true;
 }
