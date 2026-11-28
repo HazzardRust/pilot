@@ -18,8 +18,13 @@ import { hostPlatform } from '../hooks/lib/platform.js';
 import { isOpen } from './items.mjs';
 import { readDeck, writeDeck } from './store-core.mjs';
 import { localDay } from './store-recovery.mjs';
+import { emptyMachine } from './machine.mjs';
 import { defaultRoots, fromStored, toStored } from './store-codec.mjs';
 import { storeDir } from './store-dir.mjs';
+
+// A month file holds closed items' paths only (S3): no machine file stands beside it, so none is read or written.
+const monthFrom = (archive, roots) => fromStored(archive, emptyMachine(), roots);
+const monthTo = (archive, roots) => toStored(archive, roots).stored;
 
 /** How long a closed item stays live (A1). */
 const ARCHIVE_DAYS = 30;
@@ -55,7 +60,7 @@ function readMonth(file) {
   const month = parseMonth(file);
   if (!month) return [];
   try {
-    return fromStored(month.archive, roots()).items;
+    return monthFrom(month.archive, roots()).items;
   } catch (err) {
     throw new Error(`deck archive ${file} holds a path this deck cannot read (${err.message}); it has been left untouched`);
   }
@@ -92,11 +97,11 @@ export function migrateMonthFile(file, roots) {
   const month = parseMonth(file);
   if (!month) return false;
   try {
-    fromStored(month.archive, roots); // a file this machine cannot decode is left as it is
+    monthFrom(month.archive, roots); // a file this machine cannot decode is left as it is
   } catch (err) {
     throw new Error(`deck archive ${file} holds a path this deck cannot read (${err.message}); it has been left untouched`);
   }
-  const stored = toStored(month.archive, roots);
+  const stored = monthTo(month.archive, roots);
   if (JSON.stringify(stored) === JSON.stringify(month.archive)) return false;
   backUp(file, month.raw);
   atomicWriteFileSync(file, `${JSON.stringify(stored, null, 2)}\n`);
@@ -167,7 +172,7 @@ export function archiveOld({ now = new Date(), writeLive = writeDeck } = {}) {
     const file = monthFile(month);
     const ids = new Set(moving.map((item) => item.id));
     const items = [...readMonth(file).filter((item) => !ids.has(item?.id)), ...moving];
-    atomicWriteFileSync(file, `${JSON.stringify(toStored({ items }, roots()), null, 2)}\n`);
+    atomicWriteFileSync(file, `${JSON.stringify(monthTo({ items }, roots()), null, 2)}\n`);
   }
 
   writeLive({ ...deck, items: deck.items.filter(stays) });
