@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "fixing: security REQUEST CHANGES kept by main (cargo-skipped row reused as complete); fix after S6/S5/S4 integrate",
+      "state": "pushed 27b7761 (fix on b534de4); security approve x2; ts request changes on a3a3997, fixed, not re-reviewed; gate 5518/0, pins 12397/11215; needs rebase after S4",
       "after": [
         "S1"
       ],
@@ -39,7 +39,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 9e48750; gate 5489/0; ts-reviewer APPROVE; not integrated",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -60,7 +60,7 @@
     },
     {
       "slice": "S6 slice-scope runs reusable (added)",
-      "state": "integrated",
+      "state": "integrated b534de4",
       "after": [
         "S3"
       ],
@@ -75,14 +75,23 @@
       ],
       "branch": "fix/tested-once-drift",
       "worktree": "C:/Users/jrylk/Projects/pilot-fix-tested-once-drift"
+    },
+    {
+      "slice": "drift 8ff2d9a",
+      "state": "integrated c1b6101 (ff); checks green",
+      "after": [
+        "S6 slice-scope runs reusable (added)"
+      ],
+      "branch": "fix/tested-once-drift2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-tested-once-drift2"
     }
   ],
   "findings": [
     "kept: S1-sec-MEDIUM needed-fix — reuse key omits the test command; put the command in the ledger row and in fits (folded into the S2 fix)",
     "kept: S2-sec-cargo needed-fix — a slice-scope row that skipped cargo is reused as complete; row records cargo skipped, integrate/QA run cargo alone over a reused row"
   ],
-  "next": "integrating S6 067a1ee on 1a1410f (checks green); then S5, S4; then S2 fix",
-  "updatedAt": "2026-11-27T23:54:32.097Z",
+  "next": "integrating S5 9e48750 on c1b6101 (checks green); then checks; S4 rebase + re-pin; S2 rebase + QA half + re-pin",
+  "updatedAt": "2026-11-28T00:43:26.111Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -256,6 +265,22 @@
       "agent": "pilot-co-pilot",
       "what": "children adopted by a successor co-pilot still hand back to main, so the pilot relays full slice reports",
       "evidence": "a9c8e7a, ab785dd, ac7efc4 hand-backs arrived at main"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "waiting on the 5-minute-plus gate cost turns; Monitor and chained sleep unavailable",
+      "evidence": "drift2 fixer waited on background completion notices"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "nothing marks the cargo deferral machine-readably; CARGO_DEFERRED was private to gate.mjs, so the row learns of the skip only by matching gate output",
+      "evidence": "scripts/integrate.mjs:207 matches the output line"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "every slice re-pins the same two ceiling constants in scripts/gate.mjs, so each later slice conflicts and needs a rebase plus a full-gate re-measure before integrate",
+      "evidence": "S2, S4, S6, drift, drift2 each pinned SPAWN_CEILING/GIT_CEILING",
+      "size": 4
     }
   ]
 }
