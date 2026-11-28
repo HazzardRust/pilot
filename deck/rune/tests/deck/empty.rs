@@ -95,7 +95,9 @@ fn an_empty_deck_reads_as_the_html_deck() {
 /// empty queue keeps its "none" (S5).
 #[test]
 fn a_deck_with_tickets_but_none_in_a_queue_keeps_its_queues() {
-    const REPO: &str = "C:/work/alpha";
+    // The store answers a repository in its native spelling (`deck/store-codec.mjs`), so the prefs
+    // are keyed on the one spelling that reads back as given on every host.
+    const REPO: &str = r"C:\work\alpha";
     let deck = Scratch::start();
     let body = "> fix the thing\n\n1. It is done. *The test shows it.*\n\nThread itm_d2f9ed260436.";
     support::tool(
@@ -144,7 +146,8 @@ fn a_deck_with_tickets_but_none_in_a_queue_keeps_its_queues() {
 /// HTML deck (`tickets.length ? queues : 'no tickets'`), whatever the prefs hold open.
 #[test]
 fn an_empty_repository_draws_no_tickets_in_place_of_its_queues() {
-    const REPO: &str = "C:/work/beta";
+    // Native, as the store answers it: see `a_deck_with_tickets_but_none_in_a_queue_keeps_its_queues`.
+    const REPO: &str = r"C:\work\beta";
     let deck = Scratch::start();
     // A question gives the repository its tab; it is no ticket.
     support::tool(
