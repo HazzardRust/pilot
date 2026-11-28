@@ -106,6 +106,14 @@ _Avoid_: Test plan, test step
 `test`, `run`, `look` or `read`; the slice names it per behaviour, the implementer picks the instance, and `test` is for deterministic logic.
 _Avoid_: Proof type, verification mode
 
+**Ledger row**:
+One line of the user's test ledger, written once a test process has exited, with its own exit and the exact tree and command it ran, stamped by the ledger with its writer's platform and node; a later run of that command on that tree takes a passing, complete row as its proof and starts no tests.
+_Avoid_: Test cache, test result, run record
+
+**Slice scope**:
+The narrower test run of an implementer's phase gate: what the selection would widen to the whole suite is deferred to integrate and named in the scope line, and the cargo step to CI and land, so a slice-scope row proves the slice and never the merge.
+_Avoid_: Partial run, quick test, fast gate
+
 **Gate 1**:
 The user approving the artefact, on the pilot's `gate1` thread.
 _Avoid_: Plan approval, sign-off

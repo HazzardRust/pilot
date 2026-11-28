@@ -27,7 +27,7 @@ import { takeSlot } from './gate-slots.mjs';
 import { LEGACY_PILOT } from './pilot-branch.mjs';
 import { rebuildLedgers } from './ledgers.mjs';
 import { RUNE_TARGET_MAX, boundTarget, runeTargetDir, staleRoot } from './rune-target.mjs';
-import { FULL_TRIGGERS, TEST_GLOB, scopeLine, selectTests } from './select-tests.mjs';
+import { CARGO_DEFERRED, FULL_TRIGGERS, TEST_GLOB, scopeLine, selectTests } from './select-tests.mjs';
 import { costTable } from './test-cost.mjs';
 
 export const MAX_CONCURRENCY = 4;
@@ -84,6 +84,8 @@ const POLL_MS = 1_000;
  * 2026-11-27, prune-worktrees drift merge on 71991cb: 11753 (node 843, git 10616, other 294) locally + Windows-CI delta 9/6; temporary until S11 and the final exact pins; worktrees.test.mjs MERGED gains raced and gone (gone last, for its HEAD~1) and the gone test drops --unset-upstream, the fix round's two tests on test-body-git's fixture.
  * 2026-11-27, prune-worktrees S11 (one porcelain parser, one path-equality export): 11753 (node 843, git 10616, other 294) locally, unchanged by the removal; final exact pins, the Windows-CI delta 9/6 and no other headroom: 11762 / 10622 (itm_cc4171bdb60c).
  * 2026-11-27, prune-worktrees drift merge on 74b3604: 11749 (node 845, git 10610, other 294) locally + Windows-CI delta 9/6; the final exact pins (itm_abcdde7d29e5); deck/doctor.mjs takes norm and parseWorktrees from worktree-remove.mjs (QA B2), which keeps it under facades' 800 bar after prebuilt-rune's +17.
+ * 2026-11-27, tested-once drift merge on 5336235: CI windows-latest, Gate run 45992689173: spawns 11769 (node 845, git 10627, other 297); S3's select-scope fixture tests on prune-worktrees' exact pins; temporary until tested-once's last slice re-pins.
+ * 2026-11-27, tested-once S1 on dc9ddd4: 11857 (node 845, git 10713, other 299) locally + Windows-CI delta 9/6, 11866 / 10719; the test ledger's +62 git (test-ledger.test.mjs on the shared fixture, 54; a ledger row per runTests, 5 git) after the fold; temporary until tested-once's last slice re-pins.
  * 2026-11-27, classifier-env drift merge on 0146ce6: 11746 (node 845, git 10607, other 294) locally + Windows-CI delta 9/6; the final exact pins, 11755 / 10613 (itm_abcdde7d29e5).
  * 2026-11-27, prune-run-trees S1: 11915 (node 845, git 10776, other 294) locally + Windows-CI delta 9/6, 11924 / 10782; the new
  *   worktrees-run-trees fixtures (folded, 84 git) and the not-landed prune's run-tree read in every landing; temporary until S2 re-pins.
@@ -91,10 +93,15 @@ const POLL_MS = 1_000;
  * 2026-11-28, remote-run-branches S1: 11810 (node 845, git 10670, other 295) locally + Windows-CI delta 9/6, 11819 / 10676; land-prune +44 (one landing on the leftovers fixture), branches +15 (deleteMerged's local-ref read), land-tail-spawns +1; temporary until S2 re-pins.
  * 2026-11-28, remote-run-branches S2: 11823 (node 845, git 10683, other 295) locally + Windows-CI delta 9/6, 11832 / 10689; branches +13 (one prune --slug on the none fixture, grown by the sweep's branches); the final exact pins.
  * 2026-11-28, remote-run-branches landing merge on 27fae97: 11968 (node 845, git 10828, other 295) locally + Windows-CI delta 9/6, 11977 / 10834; both features' tests, the final exact pins.
+ * 2026-11-28, tested-once drift merge on 27fae97: 11996 (node 845, git 10852, other 299) locally + Windows-CI delta 9/6, 12005 / 10858; tested-once's S1-S3 on classifier-env's and prune-run-trees' exact pins (+101 / +94 over the base 11900 / 10758); temporary until tested-once's last slice re-pins.
+ * 2026-11-28, tested-once drift merge on 8ff2d9a: 12070 (node 845, git 10925, other 300) locally + Windows-CI delta 9/6, 12079 / 10931; temporary until tested-once's last slice re-pins.
+ * 2026-11-28, tested-once S4 on 2d1c7c8: 12222 (node 845, git 11067, other 310) locally + Windows-CI delta 9/6, 12231 / 11073; S4's CI-reuse tests (test-cli-reuse) on S1, S3, S5, S6 and three base drift merges; S4's pins, superseded by S2's below.
+ * 2026-11-28, tested-once S2 on a0b2e86: 12666 (node 845, git 11472, other 349) locally + Windows-CI delta 9/6, 12675 / 11478; S2's integrate-reuse (nine scratch-origin integrates, 390), the cargo-mark tests and QA's cargo-only reuse on S4's pins; S2's pins, superseded by the fix round's below.
+ * 2026-11-28, tested-once fix round on 3c7734b: 12664 (node 844, git 11471, other 349) locally + Windows-CI delta 9/6, 12673 / 11477; QA's cargo-only reuse and its test gone, one tree read on integrate's miss path, one overflow test.
  */
-export const SPAWN_CEILING = 11977;
+export const SPAWN_CEILING = 12673;
 /** The most git processes a full suite may start (land-batching S7, S6, test-body-git S13, prune-worktrees, prune-run-trees, remote-run-branches); see the dated lines above. */
-export const GIT_CEILING = 10834;
+export const GIT_CEILING = 11477;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 
@@ -139,7 +146,9 @@ export function gateArgv(args, cores, root) {
  * for the suite (none when `slot` is undefined); given `spawns`, the counter preloaded and writing there;
  * given `guard`, the home store the deck store refuses to write and the log it names each writer in (home-store-guard L4).
  */
-export function gateEnv(env, slot, spawns, guard) {
+export function gateEnv(given, slot, spawns, guard) {
+  // The scope is this gate's own; a gate the suite starts under test runs wide (tested-once S1).
+  const { PILOT_TEST_SCOPE: _scope, ...env } = given;
   const cap = `--max-old-space-size=${CHILD_HEAP_MB}`;
   const options = [];
   const inherited = (env.NODE_OPTIONS ?? '').split(/\s+/).filter(Boolean);
@@ -343,7 +352,8 @@ function homeStoreLine(file, before, deckPid) {
  * The command is the path `which` found: a bare `cargo` is looked up in the checkout first on Windows.
  * Its `env` is what the spawn adds: `CARGO_TARGET_DIR`, the shared Rune build (cheap-suite S3; L5).
  * A `selection` with files (a `--since` gate, never a full run) whose `changed` names nothing under `deck/`
- * and no `FULL_TRIGGERS` file skips it (spec 8).
+ * and no `FULL_TRIGGERS` file skips it (spec 8). At slice scope, `env.PILOT_TEST_SCOPE` `slice`, it is deferred to
+ * integrate's wide gate (tested-once spec 3).
  */
 export function cargoStep(env, which = (cmd) => onSearchPath(`${cmd}.exe`, env, platform), platform = hostPlatform(), selection) {
   if (platform !== 'win32') return { skip: 'rune deck: cargo test runs on Windows only, skipped' };
@@ -351,6 +361,7 @@ export function cargoStep(env, which = (cmd) => onSearchPath(`${cmd}.exe`, env, 
   if (selection?.files && !selection.changed.some((rel) => rel.startsWith('deck/') || FULL_TRIGGERS.includes(rel))) {
     return { skip: `rune deck: nothing under deck/ changed since ${selection.since.slice(0, 7)}, skipped` };
   }
+  if (env.PILOT_TEST_SCOPE === 'slice') return { skip: CARGO_DEFERRED };
   const cargo = which('cargo');
   if (cargo === null) return { skip: 'rune deck: cargo not on PATH, skipped' };
   const manifest = ['--manifest-path', 'deck/rune/Cargo.toml'];
@@ -420,7 +431,7 @@ function writerLines(log) {
  * killed, could not start, left a process running, or started more than `ceiling` processes; a
  * process table that cannot be read is red. The count goes to `spawns`, or a temporary file.
  * With `--since=<ref>` (suite-at-landing S1; L7) it prints the scope line first and runs only the
- * selection, the flag kept from `node`; an empty selection runs nothing and passes, a null one runs full.
+ * selection, the flag kept from `node`; an empty selection runs no node, only the cargo step, a null one runs full.
  * With `homeStore` it is red too when that file's stat changed and `deckPid()` names no deck.
  * With `homeStore` and `which` it runs `cargoStep`'s steps after the suite, in that window, red when one fails,
  * given the selection and bounding the shared target with `bound` first.
@@ -436,13 +447,24 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
     process.stderr.write('gate: --since takes its ref as --since=<ref>\n');
     return 1;
   }
+  // tested-once A2: `pilot test --scope slice` sets it; anything else is wide.
+  const scope = process.env.PILOT_TEST_SCOPE === 'slice' ? 'slice' : 'wide';
+  // The wide call is unchanged: `selectTests`'s default scope is wide.
+  if (sinceArg !== undefined) selection = select({ cwd, since: sinceArg.slice('--since='.length), ...(scope === 'slice' ? { scope } : {}) });
+  const cargo = homeStore !== undefined && which ? cargoStep({ ...process.env, PILOT_TEST_SCOPE: scope }, which, platform, selection) : undefined;
+  // The standing cargo deferral is not named in the scope line, so `pilot test` reuses a slice-scope run that left
+  // nothing else out (tested-once spec 3a, A6); its own `CARGO_DEFERRED` line marks the row, and cargo runs at CI and land.
   if (sinceArg !== undefined) {
-    selection = select({ cwd, since: sinceArg.slice('--since='.length) });
     process.stdout.write(`${scopeLine(selection)}\n`);
     args = args.filter((arg) => !/^--since(=|$)/.test(arg));
   }
   if (!ledgersCurrent(ledgers, cwd)) return 1;
-  if (selection?.files?.length === 0) return 0;
+  // An empty selection starts no node; its cargo step still runs, or prints why not, which marks a deferral.
+  const nodeless = selection?.files?.length === 0;
+  if (nodeless && !cargo?.steps) {
+    if (cargo?.skip) process.stdout.write(`${cargo.skip}\n`);
+    return 0;
+  }
   // `node --test` reads a file argument as a glob, so a metacharacter in the checkout's path is escaped.
   if (selection?.files) args = [...args, ...selection.files.map(escapeGlob)];
   // Only a full run takes a slot (suite-at-landing S4; L9): a selected run is cheap and starts at once,
@@ -464,7 +486,7 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
       before = err;
     }
     const storeBefore = homeStore === undefined ? undefined : storeStat(homeStore);
-    const run = spawn(process.execPath, gateArgv(args, os.availableParallelism(), cwd), {
+    const run = nodeless ? { status: 0 } : spawn(process.execPath, gateArgv(args, os.availableParallelism(), cwd), {
       cwd,
       env: gateEnv(process.env, held.slot, file, guard),
       stdio: 'inherit',
@@ -473,7 +495,7 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
     if (run.error) process.stderr.write(`gate: node --test did not start: ${run.error.message}\n`);
     // rune-deck-ui S19: inside the home-store window and under its guard env, so a Rust test's scratch daemon
     // that writes the home store is caught, and before the census, so one left running is too.
-    const rune = guard && which ? runeDeck(cargoStep(process.env, which, platform, selection), { spawn, cwd, env: gateEnv(process.env, held.slot, file, guard), bound, stale }) : 0;
+    const rune = guard && cargo ? runeDeck(cargo, { spawn, cwd, env: gateEnv(process.env, held.slot, file, guard), bound, stale }) : 0;
     let after;
     try {
       if (before instanceof Error) throw before;

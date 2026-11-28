@@ -42,6 +42,7 @@ import { readUsageSwitch, setUsageSwitch } from '../deck/usage-switch.mjs';
 import { main as handoff } from '../scripts/handoff.mjs';
 import { main as deckStatus } from '../deck/status-command.mjs';
 import { main as integrate } from '../scripts/integrate.mjs';
+import { main as testCli } from '../scripts/test-cli.mjs';
 import { main as featurePr } from '../scripts/feature-pr.mjs';
 import { main as land } from '../scripts/land.mjs';
 import { main as landing } from '../deck/landing-wait.mjs';
@@ -104,6 +105,9 @@ const usage = () => `pilot — the deck for piloted runs
                  in the feat/<slug> worktree, before the gate2: push the feature and try its
                  tip on pilot, merging nothing into it; prints on pilot: clean at <sha7>, the
                  sha the gate2 names, or exit 3 a conflict prepared for the lander
+  pilot test [--as <role>] [--scope slice] [--since <ref>]
+                 run the repository's tests (the selection since <ref>) and record the run in
+                 the test ledger; a green run of the same tree is reused: tests reused: <where> <sha7>
   pilot pr --ticket <itm_id>
                  the deck's write of a run's feature PR: open the draft feat/<slug> PR on the
                  record's base, or rewrite its body (spec and slice table) and base when they
@@ -416,6 +420,11 @@ export async function run(argv, deps) {
 
   if (command === 'integrate') {
     process.exitCode = integrate(argv.slice(1));
+    return undefined;
+  }
+
+  if (command === 'test') {
+    process.exitCode = testCli(argv.slice(1));
     return undefined;
   }
 
