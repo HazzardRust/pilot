@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed c93ad90; ts approve on merged diff; not integrated",
+      "state": "pushed c7a81f6 (fixed on the native-spelling tree, ts approve); integrating",
       "after": [
         "S1"
       ],
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed 8c6b4d2; ts approve on merged diff; not integrated",
+      "state": "integrated, checks green at 4364c19 after macOS audit fix",
       "after": [
         "S1"
       ],
@@ -33,7 +33,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed feba0f1 (on S2); ts approve, security approve; not integrated",
+      "state": "pushed cab49a0 (fixed on the native-spelling tree, ts approve)",
       "after": [
         "S2"
       ],
@@ -42,7 +42,7 @@
     },
     {
       "slice": "S5",
-      "state": "implementing",
+      "state": "pushed 411305d (ts approve; security approve on re-review)",
       "after": [
         "S4"
       ],
@@ -51,14 +51,16 @@
     },
     {
       "slice": "S6",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S5"
-      ]
+      ],
+      "branch": "slice/portable-store-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s6"
     },
     {
       "slice": "S7",
-      "state": "implementing",
+      "state": "pushed dad0f44",
       "after": [
         "S4"
       ],
@@ -108,47 +110,20 @@
       "after": [
         "S9 drift fix (added)"
       ]
+    },
+    {
+      "slice": "macOS audit fix",
+      "state": "integrated (ff) at 4364c19, checks green",
+      "after": [
+        "S3"
+      ],
+      "branch": "fix/portable-store-s3-mac",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-portable-store-s3-mac"
     }
   ],
-  "next": "co-pilot: S3 integrating on e39480a; S2 B4/S4 B5 evidence in hand (API, browser look for QA); S5, S7 implementing; then S2, S4 integrate, S6, fundamentalist, QA.",
-  "updatedAt": "2026-11-28T06:32:08.013Z",
+  "next": "co-pilot: integrating S2 c7a81f6 on 4364c19; then S4 cab49a0, S7 dad0f44 (needs archive-page pin for exported-noticed.json), S5 411305d, S6; fundamentalist; QA.",
+  "updatedAt": "2026-11-28T07:26:20.619Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "Edit refused a file not just Read, costing a round trip on three files; a sed -i on a tracked file was hook-blocked, redone as six Edit calls",
-      "evidence": "S8 implementer report",
-      "size": 4
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "test:changed falls back to the full suite (selection argv over 24000 chars), so every S1 gate is ~15 min on a shared machine",
-      "evidence": "S1 gate log s1-gate-1.log",
-      "size": 15
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "~31 test files read deck.json raw, so any store-format change ripples across the suite; S1 went 379 to ~600 lines on it",
-      "evidence": "S1 handoff: ripple kinds list",
-      "size": 250
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S1 implementer hit its context advisory mid-slice and handed off",
-      "evidence": "S1 HANDOFF message",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S1's slice file had no behaviour for a store this deck cannot decode; the rollback-over-live-store path was caught only by the silent-failure reviewer (BLOCK), then needed a second review of the fix",
-      "evidence": "S1 report pushback; store-core.mjs:176-180",
-      "size": 8
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "platform-reads.test.mjs runs only in the full suite: a process.platform read in testUtils was found 15 minutes in; full suite not rerun after the one-line fix",
-      "evidence": "S1 report: gate node 5080 pass, 1 fail",
-      "size": 4
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "two commit trailers in play: the co-pilot's brief gave one model and session, the feature brief.md another",
@@ -327,6 +302,42 @@
       "what": "slice implementer reports lost at a pause leave integrate refusing (no Evidence rows); re-gathering cost one agent",
       "evidence": "NOT integrated slice/portable-store-s3: S3: B1 has no --trailer Evidence",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "selected suite ~11 min for a 6-file slice; repo-wide checks (deck README module list, archive-coverage NEVER_SHOWN) not named in the slice file surfaced only at the gate",
+      "evidence": "S7 duration_ms 681776; deck-readme and archive-coverage reds",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck/doctor.mjs at 798 of the 800-line bar after S7",
+      "evidence": "wc -l deck/doctor.mjs 798",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "storePid with no deck.pid probes PILOT_DECK_PORT or 4321 where the live deck answers; a scratch-home import is refused unless PILOT_DECK_PORT names a free port",
+      "evidence": "S5 B6 run",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared rune-target dir: cargo link LNK1104, exe held by another build; rune suite did not run in S5 gate",
+      "evidence": "S5 gate",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice briefs name a browser look, but implementers here have no Chrome DevTools MCP; looks fall to QA",
+      "evidence": "S2 B4, S5 B6, S7 B3 read over HTTP only",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate refuses a fix branch for the very red it fixes (red feature tip takes no slice); the fix has to go onto feat by hand as a fast-forward",
+      "evidence": "NOT integrated fix/portable-store-s3-mac: checks red at 66a8b29: gate (macos-latest); fix the feature first",
+      "size": 1
     }
   ]
 }
