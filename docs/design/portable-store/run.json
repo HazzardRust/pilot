@@ -42,7 +42,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 411305d (ts approve; security approve on re-review)",
+      "state": "pushed 411305d; integrating on 38b2bf7",
       "after": [
         "S4"
       ],
@@ -60,7 +60,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed 9c724d8; integrating on 35044a2",
+      "state": "integrated, checks green at 38b2bf7",
       "after": [
         "S4"
       ],
@@ -121,8 +121,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-fix-portable-store-s3-mac"
     }
   ],
-  "next": "co-pilot: integrating S7 9c724d8 on 35044a2 (checks green); then S5 411305d, S6 239e540; fundamentalist; QA.",
-  "updatedAt": "2026-11-28T08:27:48.807Z",
+  "next": "co-pilot: integrating S5 411305d on 38b2bf7 (checks green); then S6 239e540; fundamentalist; QA.",
+  "updatedAt": "2026-11-28T08:55:12.300Z",
   "friction": [
     {
       "kind": "drain",
