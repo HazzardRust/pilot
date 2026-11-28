@@ -31,6 +31,7 @@ import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resol
 import { LEGACY_PILOT, NO_NAME, firstLine, namePilotBranch, pilotBranch } from '../scripts/pilot-branch.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
 import { autoModeRow } from './doctor-automode.mjs';
+import { exportedRows } from './exported.mjs';
 import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
 import { powerRow, readPower } from './power.mjs';
 import { probeDeck } from './probe.mjs';
@@ -713,6 +714,7 @@ export async function checkAll({
     nodeRow({ nodeVersion, engines }),
     dependencyRow({ resolveDep }),
     storeRow({ storeDir, canWrite }),
+    ...exportedRows(storeDir),
     reachRow({ reach: readReach(), enabled: readEnabled() }),
     hostRow({ git, hostFor, onPath, cwd }),
     pilotBranchRow({ git, host: hostOrNull(hostFor, cwd, git) }),
