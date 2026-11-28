@@ -62,8 +62,8 @@ import { look } from '../deck/look.mjs';
 import { main as listProcesses, processTable } from '../deck/procs.mjs';
 import { main as collectGarbage, deckPidNow, landSweep } from '../deck/gc.mjs';
 import { main as doctor, slugsWarning } from '../deck/doctor.mjs';
-import { main as restoreStore } from '../deck/store-restore.mjs';
-import { exportStore } from '../deck/store-move.mjs';
+import { main as restoreStore, storePid } from '../deck/store-restore.mjs';
+import { exportStore, importStore } from '../deck/store-move.mjs';
 import { main as waitForReply } from '../deck/wait.mjs';
 import { main as waitForFile } from '../deck/wait-for.mjs';
 import { openPilot } from '../deck/session.mjs';
@@ -240,6 +240,13 @@ const usage = () => `pilot — the deck for piloted runs
                  whatever they hold; threads travel as written too. Then list
                  each open run's worktree with work on no remote, and landings in flight;
                  exit 0 once written, whatever the list says
+  pilot store import <bundle> [--root <name>=<path>]... [--replace] [--dry-run]
+                 with the deck stopped: check the whole bundle (entry names, checksums,
+                 store version, every path under a root), then write it into this
+                 machine's store with a fresh machine.json; home maps to this home, a drive
+                 to the same drive, any other root needs --root. Refused over a store
+                 unless --replace, which keeps the old files under replaced-<date>/;
+                 --dry-run prints the entries and roots and writes nothing
   pilot doctor   on Windows, whether Defender's real-time scan sits in front of the projects
                  root (the repository's parent): off, on a Dev Drive in performance mode,
                  excluded, not, or cannot tell without an administrator, and the admin step
@@ -612,6 +619,18 @@ export async function run(argv, deps) {
       return { status: run.status, stdout: run.stdout ?? '', stderr: run.stderr || run.error?.message || '' };
     };
     process.exitCode = exportStore(argv.slice(2), { git });
+    return undefined;
+  }
+
+  if (command === 'store' && flag === 'import') {
+    // Asked once before the import, which stays synchronous: null is "no deck serves", anything else refuses (L7).
+    let pid;
+    try {
+      pid = await storePid();
+    } catch {
+      pid = undefined;
+    }
+    process.exitCode = importStore(argv.slice(2), { storePid: () => pid });
     return undefined;
   }
 
