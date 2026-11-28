@@ -220,6 +220,7 @@ spelling, both hold. S3's `directoryFor` hashes `encodePath(repo)`: under A8 a r
 spellings gets two audit folders, written into A8 rather than re-cut (L2 accepts two stored spellings; behaviour
 2's cross-host pin forbids hashing the win32-lowered `pathKey`). The drift fix holds under L2 and A8 alike (F8).
 No built slice is re-cut; S9 is added.
+  Verdict: stands — deck default twice (itm_ad2385df32fa, itm_e2c73d1c2d6a), not the user; taking a link's realpath changed a worktree's spelling across a store round trip on CI, and it is what S1 on feat already does
 
 ## 7. Out of scope
 
