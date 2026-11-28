@@ -15,19 +15,19 @@
     },
     {
       "slice": "S2 Every run is cut from the pilot branch",
-      "state": "implementing",
+      "state": "pushed 4809005",
       "branch": "feat/landed-pr-closed-s2",
       "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s2"
     },
     {
       "slice": "S3 A gate1 shows the run's base",
-      "state": "implementing",
+      "state": "pushed 9f99218",
       "branch": "feat/landed-pr-closed-s3",
       "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s3"
     },
     {
       "slice": "S4 The crew and docs say one line",
-      "state": "pushed b969499",
+      "state": "integrated",
       "branch": "feat/landed-pr-closed-s4",
       "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s4"
     },
@@ -38,8 +38,8 @@
       "worktree": "C:\\Users\\jrylk\\Projects\\pilot-feat-landed-pr-closed-s5"
     }
   ],
-  "next": "co-pilot: S1 integrated 3444c44 green; S4 integrating; S5 pushed 1943b6e, integrates after S4 checks; S2, S3 implementing.",
-  "updatedAt": "2026-11-28T13:50:44.585Z",
+  "next": "co-pilot: S1, S4 integrated; S5 integrating; then S2 4809005, then S3 9f99218 (both touch deck/test/lineage-base.test.mjs); then fundamentalist and QA.",
+  "updatedAt": "2026-11-28T14:21:55.468Z",
   "friction": [
     {
       "agent": "architect",
@@ -130,6 +130,36 @@
       "agent": "pilot-implementer",
       "what": "away.test.mjs printed 3 failure lines with 'a gate1 names its run's base' yet counted 0 fails; passes alone",
       "evidence": "S5 gate log on 3444c44, which has no S3 code"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "architecture F6 said RUN_BASE checked on incoming field only; three read sites exist, cost a seam-change round trip",
+      "evidence": "S2: integrate.mjs:375, feature-pr.mjs:123, lineage.mjs:42"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2 owned list missed 7 test files pinning base main; found only after a ~15 min full suite",
+      "evidence": "grep -rn 'base main' --include=*.test.mjs finds them in one call"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "test:changed is the same command as test; no selected run for an implementer",
+      "evidence": "package.json"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "about 50 gate1 post sites in fixtures with no shared gate1 body helper; a new gate1 rule costs ~40 one-line edits found over two full runs",
+      "evidence": "S3: 37 files touched, first targeted run 119 failures, full gate 7 more"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "pilot-architect prompt pin had zero headroom; any addition needs an equal trim",
+      "evidence": "S3: measure-prompt 10767 / pin 10767.5"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice file anchor off by one (pilot-architect.md:161-165, step is :162-165)",
+      "evidence": "S3 fact sheet"
     }
   ]
 }
