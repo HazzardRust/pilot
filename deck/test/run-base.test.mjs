@@ -23,14 +23,19 @@ const MINE = path.join('D:', 'work', 'pilot');
 
 const status = (run, fields) => callTool('deck_status', { run: run.id, slug: 'run-base', slices: [{ slice: 'S1', state: 'building' }], ...fields });
 
-test('a main base is refused at write, naming the allowed forms; the pilot branch, pilot and feat/<slug> pass', (t) => {
+test('a main base is refused at write, naming the allowed forms, and writes no record', (t) => {
   tempDeck(t);
   const run = registerRun({ repo: MINE, pid: process.pid });
 
   for (const base of ['main', 'trunk', 'release/1.2']) {
     assert.throws(() => status(run, { base }), { name: 'DeckRefusal', message: /base must be your pilot branch, pilot or feat\/<slug>, not "/ }, base);
   }
-  assert.equal(recordFor(MINE), null, 'a refused base writes no record');
+  assert.equal(recordFor(MINE), null);
+});
+
+test('the pilot branch, the legacy pilot and feat/<slug> are written as sent', (t) => {
+  tempDeck(t);
+  const run = registerRun({ repo: MINE, pid: process.pid });
 
   for (const base of ['hazzardrust-pilot', 'pilot', 'feat/x']) {
     status(run, { base });

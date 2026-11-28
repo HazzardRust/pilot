@@ -255,8 +255,9 @@ export const isSlug = (word) => typeof word === 'string' && word.length <= MAX_S
 
 /**
  * A run's base as read (pilot-develop-line L6; audit-f14 A7): `pilot`, the concluding feature's `feat/<slug>` it is
- * chained on, or the default branch's own name a record written before landed-pr-closed may hold. It reaches git as an argument, so it never starts with `-`, holds no `..` or
- * `//`, is never `HEAD`, and ends in no `/`, `.` or `.lock`; a `feat/` segment is only ever the slug form.
+ * chained on, or the default branch's own name a record written before landed-pr-closed may hold. It reaches git as
+ * an argument, so it never starts with `-`, holds no `..` or `//`, is never `HEAD`, and ends in no `/`, `.` or
+ * `.lock`; a `feat/` segment is only ever the slug form.
  */
 export const RUN_BASE = new RegExp(`^(?:feat/${SLUG.source.slice(1, -1)}|(?!HEAD$)(?!(?:.*/)?feat/)(?!.*(?:\\.\\.|//|\\.lock$|[./]$))[A-Za-z0-9_][A-Za-z0-9._/-]*)$`);
 
