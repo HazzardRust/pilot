@@ -1,0 +1,359 @@
+{
+  "slug": "user-pilot-branch",
+  "feature": "The pilot branch is named for its user",
+  "ticket": "itm_0476cd419c86",
+  "branch": "feat/user-pilot-branch",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-user-pilot-branch",
+  "artefact": "docs/design/user-pilot-branch/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/user-pilot-branch-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/user-pilot-branch-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated",
+      "after": [
+        "S1",
+        "S2"
+      ],
+      "branch": "slice/user-pilot-branch-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/user-pilot-branch-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/user-pilot-branch-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "integrated",
+      "after": [
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "branch": "slice/user-pilot-branch-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s6"
+    },
+    {
+      "slice": "S7",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/user-pilot-branch-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s7"
+    },
+    {
+      "slice": "S8",
+      "state": "integrated",
+      "after": [
+        "S5"
+      ],
+      "branch": "slice/user-pilot-branch-s8",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s8"
+    },
+    {
+      "slice": "feature",
+      "state": "gate2 itm_f0032b7402c6 posted at 156149e, awaiting Sign off",
+      "branch": "feat/user-pilot-branch",
+      "pr": 157
+    },
+    {
+      "slice": "S9",
+      "state": "integrated",
+      "after": [
+        "S6"
+      ],
+      "branch": "slice/user-pilot-branch-s9",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s9"
+    },
+    {
+      "slice": "fix",
+      "state": "integrated",
+      "after": [
+        "S9"
+      ],
+      "branch": "fix/user-pilot-branch",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-fix"
+    }
+  ],
+  "findings": [
+    "kept: F2 simplify — delete feature-pr's nameOf and checked (-9)",
+    "kept: F3 simplify — branches.mjs pilot clause unreachable past DELETABLE; its pilotBranch(git) call at :87 makes `pilot branches` exit NO_NAME in a clone with no stored name, a defect (-3)",
+    "kept: F4 simplify — doctor takes the source from namePilotBranch's .source; drop loginOf; record S7's interface change (-12)",
+    "kept: F5 simplify — lineage.mjs resolves pilotBranch only when base is undefined (-6)",
+    "kept: F6 needed-test — tests for the spec 5 refusal at pilot sync, land and pr (+30)",
+    "kept: F8 doc — S9.md fails check-slices (+4)",
+    "kept: N1 N2 N3 N5 — name passed to releaseNotes; isPilotName via isLogin; assertPushable before storing the name; drop the run wrapper and repeated base",
+    "kept: QA1 — L1's 'one line says it can be deleted' was docs only; pilot base prints one stderr line when the branch is created from `pilot`",
+    "dropped: F1 simplify — removing land/release env fallbacks reads L7 narrower; asked of the user as itm_e592f00ed101, default keep",
+    "dropped: F7 — mutation dry run timed out, tooling limit, no code change; diff coverage 97% (1023/1044) stands",
+    "dropped: N4 — raising the prompt pin is a budget decision outside this feature"
+  ],
+  "humanSteps": [
+    {
+      "text": "After Gate 2: delete the private scratch repo HazzardRust/pilot-branch-scratch (QA's seed: branches, PRs #1-#4, Actions on)."
+    }
+  ],
+  "next": "Green. Gate2 itm_f0032b7402c6 (PR #157, 156149e, checks green, trial clean) owned by pilot; QA a98275cc1bd5ba3e7 ended. On press: spawn pilot-lander with the gate2 id; then remove worktree pilot-user-pilot-branch-qa and scratch clones in the old scratchpad. On Not yet naming S9 or F1: resume QA as writer (revert d3e4ba04 for S9; F1 ~30 lines).",
+  "updatedAt": "2026-11-25T23:09:55.893Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "pilot wait restarted 5 times on 50-minute timeouts; one REPLY was the deck's own 20-minute default, and its hook notice called it a landing ended short on a gate2",
+      "size": 6
+    },
+    {
+      "kind": "drain",
+      "what": "auto mode gave no verdict on a call sharing a response with a deck call, four times; each reissued alone",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "deck_status next capped at 400 chars: three calls rejected and rewritten",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "every deck status or comment write reverts PR #144's body to the installed code's, so the feature's own overview cannot stay visible for the Gate 2 read",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "evidence rows live only in agent reports: the pilot wrote a trailer file to its scratchpad so the hand-off would not lose S2's and S3's",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "a context summary dropped the details of one deck_post and one TaskStop mid-turn; the pilot could not say what it had posted",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 implementer stalled before its first edit; stream watchdog killed it after 600s with no progress",
+      "evidence": "task-notification failed: Agent stalled: no progress for 600s; worktree clean at 841e71e",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S1 fact-sheet helper stalled 600 s (stream watchdog) and the co-pilot then made no tool call for 20 min, ignoring a pause; main stopped it",
+      "evidence": "task a6d84248a9d90790f failed; deck Idle notice on itm_0476cd419c86 18:10Z",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "GitHub partial outage: 9 'feature PR not updated' notices each woke pilot wait and needed a read, a reply and a restart",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "prompt pins at near-zero headroom after S8 (pilot 0.5 tokens, pilot-architect 1.25, always-loaded rules 2): every wording change costs a re-measure and the next slice touching them breaks a pin",
+      "evidence": "user-pilot-branch S8 report, measure-prompt",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "gate fails on a stale shipped-rules ledger after every rule edit; two extra gate runs of ~100 s",
+      "evidence": "user-pilot-branch S8 report: 'ledger stale: … rebuilt; commit it'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "harness forced a hand-back while its S1 implementer was live; pilot had to resume it",
+      "evidence": "co-pilot hand-back, handback-send-enforce notice",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot ready --slots 6 did not print S8 though it names no blockers; pilot budget refuses to run from the feat worktree",
+      "evidence": "co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "prompt pins have near-zero headroom after S8 (pilot 12141.5/12142, architect 10680.5/10681.75, rules 3498/3500)",
+      "evidence": "S8 implementer report via main"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate fails on stale shipped-rules ledger after every rule edit",
+      "evidence": "2 extra ~100 s gate runs in S8",
+      "size": 200
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot ready did not print S8 though the plan names no blockers; a duplicate S8 implementer was spawned (stopped by message, touched nothing) since TaskStop from the co-pilot is refused",
+      "evidence": "pilot ready --slots 6 printed only 'feature from feat'; TaskStop: 'agent cannot stop it'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no-fixture-edit rule collided with A4: pilot-branch-env.test.mjs asserted assertPushable wording; HOST_KEYS in host-contract test sits outside slice files",
+      "evidence": "S1 report: 2 one-line edits outside owned files",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "full gate ~10 min, 13,882 spawns (12,751 git)",
+      "evidence": "S1 npm test run",
+      "size": 600
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: pilot prompt pin has no headroom; tools.mjs base field text cut to 'branch, feat/<N>' after 5 measure rounds; slice wording cannot hold under the pin",
+      "evidence": "measure-prompt.test.mjs 12145 > 12142",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: plan's after: S1 omitted S2; land pushes via sync.mjs TARGET (S2-owned), so B1 cannot go green alone",
+      "evidence": "sync.mjs:32 refs/heads/${PILOT_BRANCH}; B1 red on S3 branch",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: slice file kept head === PILOT_BRANCH refusal; with per-user branches integrate could merge and push onto another user's *-pilot (caught by security review, fixed with B5)",
+      "evidence": "B5 red: said.ok true with HEAD bob-pilot",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: early context compaction with no summary; reviewer's test run outlived its 120 s call and ran beside the gate",
+      "evidence": "S2 report friction table",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: slice Interface pilotBranchRow({git, host, env}) could not hold against S1's process.env reads; env dropped (seam change)",
+      "evidence": "typescript-reviewer HIGH: label used injected env, name used process.env",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: slice file's feature-pr 'record.base ?? name' ran before the host-none return (ordering hazard unnamed); typescript reviewer not re-run after its REQUEST CHANGES fix round",
+      "evidence": "S4 report: Verdict REQUEST CHANGES on pre-fix diff; co-pilot spawned a re-review",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot checks --wait returns 'pending' on the macos-latest job instead of waiting to a verdict; every integration needs a second wait",
+      "evidence": "checks pending at bbe2b8c and at 3690751: gate (macos-latest)",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: pinned tests call exported land helpers without a name, forcing env-fallback defaults that lean on the PILOT_BRANCH pin S6 removes",
+      "evidence": "S3 report: retarget/comment/pushFeature/releasePr optional name",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: tree-census rule (folder-listing tests must be in TREE_TESTS) is enforced only by the full gate",
+      "evidence": "tree-census.test.mjs red in full run, fixed in 6f41b35",
+      "size": 600
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: 3 Rust deck tests time out on the scratch deck under full-suite load (flakes, green alone)",
+      "evidence": "no scratch deck answered … none after 10000ms; act_thread/act_deck",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "hook notice mislabelled a question's auto-assumed close as 'a landing ended short' and pilot wait printed it as REPLY; pilot nearly relayed a deck default as the user's press",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "machine hibernated twice on CPU heat (user's HeatGuard, shutdown /h at 95C sustained) under parallel gates; 2 h of frozen agents read as a stalled co-pilot",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "Stryker dry run cannot finish over this suite in 5 min; mutation evidence unavailable for scripts/ diffs; knip reports 722 unused files repo-wide, unscopable",
+      "evidence": "Initial test run timed out!; knip truncated list",
+      "size": 303
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "L5 gave the seam but no thread-vs-re-resolve rule; S2/S5 re-resolve, S3/S4 thread, S3 added fallbacks: three rules for one fact",
+      "evidence": "F1, F2, F4, F5",
+      "size": 4
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "`pilot land` from the CLI runs landSweep, which stops orphan processes machine-wide; QA drove land.mjs main() through its own driver in the scratch repo",
+      "evidence": "bin/pilot.mjs:421",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "`pilot base` reads the live deck (GET /api/tickets) even from a scratch repo; later runs pinned PILOT_DECK_PORT",
+      "evidence": "base.mjs:146 deckConcluding",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "seed fixtures in a top-level dir fail the README-coverage test: one red CI run (~7 min) and a re-push",
+      "evidence": "Gate run 45709408515",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "`gh run watch --exit-status` exited while the run was in progress; replaced by a poll loop. Private repo: land never trusts CI (1 gate job), full suite locally per landing",
+      "evidence": "QA report, 'no ci proof: 1 gate jobs, fewer than 3'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a single test file run without PILOT_BRANCH=pilot gives 9 false reds because only the gate pins it",
+      "evidence": "user-pilot-branch fix round report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "gate log prints 'home store changed: ~/.claude/pilot/deck.json; live deck 8472 up' on every run while a live deck writes its own store; reads like a test fault",
+      "evidence": "fix round gate, both runs; same line in archive-page QA",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "co-pilot forced to hand back 3 times with children live and spent at 227k; pilot took over integrate, fix verification and QA routing",
+      "size": 3
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "gate2 post refuses pr: \"157\" and wants the table header verbatim; 2 extra posts",
+      "evidence": "user-pilot-branch QA report",
+      "size": 1
+    }
+  ]
+}

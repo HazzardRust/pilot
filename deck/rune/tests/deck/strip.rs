@@ -15,6 +15,21 @@ use pilot_deck::regions::strip::{self, Local};
 use rune::{Env, Runtime, TextEdit};
 use serde_json::{Value, json};
 
+/// archive-page S16 (spec 10): the strip carries Items alone; Archive is the left bar's.
+#[test]
+fn the_strip_has_no_archive_button() {
+    // A view that still carried the old `archive` key must draw no button for it.
+    let mut strip = ended_tab();
+    strip["archive"] = json!({ "here": false });
+    let state = State {
+        view: view_with(strip),
+        ..State::default()
+    };
+    let rt = frame(state);
+    assert!(rt.find("strip-archive").is_none());
+    assert!(!texts(&rt).iter().any(|t| t == "Archive"));
+}
+
 fn view_with(strip: Value) -> View {
     View {
         screen: "home".into(),

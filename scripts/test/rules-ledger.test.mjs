@@ -2,6 +2,8 @@
  * S2 of main-never-red: the rules ledger builds for any checkout (spec 1; L3).
  */
 
+import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 import { rulesLedgerText } from '../build-rules-ledger.mjs';
 
 import { test } from 'node:test';
@@ -55,34 +57,30 @@ test('a rebuild on a history that no longer holds an old version keeps its hash 
 });
 
 test('a shallow clone is refused', (t) => {
-  const src = tempDir(t);
-  git(src, 'init', '-q', '-b', 'main');
-  for (const n of ['one', 'two']) {
-    fs.writeFileSync(path.join(src, 'f.txt'), n);
-    git(src, 'add', 'f.txt');
-    git(src, 'commit', '-q', '-m', n);
-  }
+  const { origin } = seed(tempDir(t), [
+    { branch: 'main', files: { 'f.txt': 'one' }, message: 'one' },
+    { branch: 'main', files: { 'f.txt': 'two' }, message: 'two' },
+  ]);
   const dest = path.join(tempDir(t), 'clone');
-  git(src, 'clone', '-q', '--depth', '1', pathToFileURL(src).href, dest);
+  git(origin, 'clone', '-q', '--depth', '1', pathToFileURL(origin).href, dest);
   assert.throws(() => rulesLedgerText(dest), /shallow/);
 });
 
 /** A one-commit repo, as after the fresh-repo move: `rules/a.md` at "two", and a ledger recording more than history holds. */
 function freshRepo(t) {
-  const dir = tempDir(t);
-  git(dir, 'init', '-q', '-b', 'main');
-  fs.mkdirSync(path.join(dir, 'rules'));
-  fs.mkdirSync(path.join(dir, 'scripts'));
-  fs.writeFileSync(path.join(dir, 'rules', 'a.md'), 'two\n');
-  const ledger = {
-    'a.md': [sha256('one\n'), sha256('two\n')].sort(),
-    'gone.md': [sha256('retired\n')],
-  };
-  const text = `{\n${Object.entries(ledger).map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v)}`).join(',\n')}\n}\n`;
-  fs.writeFileSync(path.join(dir, 'scripts', 'shipped-rules.json'), text);
-  git(dir, 'add', 'rules', 'scripts');
-  git(dir, 'commit', '-q', '-m', 'fresh');
-  return { dir, text };
+  return gitFixture(t, 'rules-ledger:fresh', (root) => {
+    const ledger = {
+      'a.md': [sha256('one\n'), sha256('two\n')].sort(),
+      'gone.md': [sha256('retired\n')],
+    };
+    const text = `{\n${Object.entries(ledger).map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v)}`).join(',\n')}\n}\n`;
+    const { origin } = seed(root, [
+      { branch: 'main', files: { 'rules/a.md': 'two\n', 'scripts/shipped-rules.json': text }, message: 'fresh' },
+    ]);
+    const dir = path.join(root, 'repo');
+    git(root, 'clone', '-q', origin, dir);
+    return { dir, text };
+  });
 }
 
 test('a ledger entry the history no longer holds is kept', (t) => {
@@ -116,22 +114,16 @@ test('a malformed committed ledger is an error, never carried forward', (t) => {
 });
 
 test('a merge in progress counts the incoming commits', (t) => {
-  const dir = tempDir(t);
-  git(dir, 'init', '-q', '-b', 'main');
-  fs.mkdirSync(path.join(dir, 'rules'));
-  fs.writeFileSync(path.join(dir, 'rules', 'x.md'), 'base\n');
-  fs.writeFileSync(path.join(dir, 'rules', 'y.md'), 'base\n');
-  git(dir, 'add', 'rules');
-  git(dir, 'commit', '-q', '-m', 'base');
-  git(dir, 'checkout', '-q', '-b', 'slice');
-  for (const n of ['middle', 'final']) {
-    fs.writeFileSync(path.join(dir, 'rules', 'x.md'), `${n}\n`);
-    git(dir, 'commit', '-q', '-am', n);
-  }
-  git(dir, 'checkout', '-q', 'main');
-  fs.writeFileSync(path.join(dir, 'rules', 'y.md'), 'main edit\n');
-  git(dir, 'commit', '-q', '-am', 'main edit');
-  git(dir, 'merge', '-q', '--no-ff', '--no-commit', 'slice');
+  const root = tempDir(t);
+  const { origin } = seed(root, [
+    { branch: 'main', files: { 'rules/x.md': 'base\n', 'rules/y.md': 'base\n' }, message: 'base' },
+    { branch: 'slice', files: { 'rules/x.md': 'middle\n' }, message: 'middle' },
+    { branch: 'slice', files: { 'rules/x.md': 'final\n' }, message: 'final' },
+    { branch: 'main', files: { 'rules/y.md': 'main edit\n' }, message: 'main edit' },
+  ]);
+  const dir = path.join(root, 'repo');
+  git(root, 'clone', '-q', origin, dir);
+  git(dir, 'merge', '-q', '--no-ff', '--no-commit', 'origin/slice');
   const ledger = JSON.parse(rulesLedgerText(dir));
   assert.ok(ledger['x.md'].includes(sha256('middle\n')));
 });

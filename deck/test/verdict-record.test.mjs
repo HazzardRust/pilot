@@ -6,7 +6,7 @@
  */
 
 import './no-open.mjs';
-import { gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
+import { GIT_SLOW_MS, gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -66,20 +66,20 @@ test('only the pilot records', (t) => {
 
 test('no record, no gate1', (t) => {
   const { work, sha } = artefactAt(t, TWO);
-  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: BODY }), refused('verdict record', 'deck_ticket verdicts'));
-  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: BODY }, { record: undefined }), refused('verdict record'));
+  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: BODY }, { timeout: GIT_SLOW_MS }), refused('verdict record', 'deck_ticket verdicts'));
+  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: BODY }, { record: undefined, timeout: GIT_SLOW_MS }), refused('verdict record'));
 });
 
 test('a differing verdict is named', (t) => {
   const { work, sha } = artefactAt(t, TWO);
   const record = { A1: 'stands', A2: 'overturned: the user wants B' };
-  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: BODY }, { record }), (error) => refused('A2')(error) && !error.message.includes('A1'));
+  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: BODY }, { record, timeout: GIT_SLOW_MS }), (error) => refused('A2')(error) && !error.message.includes('A1'));
 });
 
 test('an id on one side is named', (t) => {
   const { work, sha } = artefactAt(t, TWO);
   const gate = { sha, artefact: ARTEFACT, body: BODY };
-  assert.throws(() => assertVerdicts(work, gate, { record: { A1: 'stands' } }), refused('A2'));
-  assert.throws(() => assertVerdicts(work, gate, { record: { A1: 'stands', A2: 'stands — the default holds', A3: 'stands' } }), refused('A3'));
-  assert.doesNotThrow(() => assertVerdicts(work, gate, { record: { A1: 'stands', A2: 'stands — the default holds' } }));
+  assert.throws(() => assertVerdicts(work, gate, { record: { A1: 'stands' }, timeout: GIT_SLOW_MS }), refused('A2'));
+  assert.throws(() => assertVerdicts(work, gate, { record: { A1: 'stands', A2: 'stands — the default holds', A3: 'stands' }, timeout: GIT_SLOW_MS }), refused('A3'));
+  assert.doesNotThrow(() => assertVerdicts(work, gate, { record: { A1: 'stands', A2: 'stands — the default holds' }, timeout: GIT_SLOW_MS }));
 });

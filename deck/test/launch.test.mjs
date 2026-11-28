@@ -19,7 +19,8 @@ import { tempDeck } from '../testUtils.mjs';
 
 const { createDeckHttpServer } = await import('../server.mjs');
 const { openCookie, openFile, rotateSecret, writeOpenFile } = await import('../launch.mjs');
-const { PACKAGE_ROOT, runeBinary } = await import('../open.mjs');
+const { PACKAGE_ROOT } = await import('../open.mjs');
+const { runeBinary } = await import('../rune-bin.mjs');
 
 const CLI = fileURLToPath(new URL('../../bin/pilot.mjs', import.meta.url));
 const run = promisify(execFile);

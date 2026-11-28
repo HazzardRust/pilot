@@ -67,8 +67,8 @@ const isReview = (review) => {
   assert.ok(Number.isSafeInteger(review.number));
 };
 
-/** The **Host** surface, whole: no `whoami` and no `name` (user answer itm_6eca66849bdb). */
-const HOST_KEYS = ['checks', 'cli', 'comment', 'edit', 'open', 'review', 'reviews', 'signedIn', 'testedTrees', 'upsertComment'];
+/** The **Host** surface, whole: no `whoami` and no `name` (user answer itm_6eca66849bdb); `login` names the pilot branch (user-pilot-branch L3). */
+const HOST_KEYS = ['checks', 'cli', 'comment', 'edit', 'login', 'open', 'review', 'reviews', 'signedIn', 'testedTrees', 'upsertComment'];
 
 const CONTRACT = [
   ['reviews', (host) => host.reviews({ state: 'all' }), (said) => { assert.equal(said.length, 3); said.forEach(isReview); assert.deepEqual(said.map((r) => r.state), ['open', 'merged', 'closed']); }],
@@ -90,7 +90,7 @@ function stubbed(t) {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
-    fs.rmSync(stub.dir, { recursive: true, force: true });
+    fs.rmSync(stub.dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   });
   Object.assign(process.env, stub.env);
   return stub.dir;
@@ -209,7 +209,7 @@ if (/^glab(\\.exe)?$/i.test(path.basename(process.execPath))) {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
-    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   });
   process.env.PATH = `${dir}${path.delimiter}${process.env.PATH ?? ''}`;
   process.env.NODE_OPTIONS = `--require "${stub.replaceAll('\\', '/')}"`;

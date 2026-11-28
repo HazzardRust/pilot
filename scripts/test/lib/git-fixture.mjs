@@ -33,9 +33,14 @@ import os from 'node:os';
 import path from 'node:path';
 
 const GLOBAL_CONFIG = path.join(FAKE_HOME, '.gitconfig');
+/** The identity every fixture commit carries: the global config's [user] below, and seed.mjs's fast-import stream. */
+export const IDENTITY = { name: 'test', email: 't@example.com' };
+
 fs.writeFileSync(GLOBAL_CONFIG, [
-  '[user]', '\tname = test', '\temail = t@example.com',
+  '[user]', `\tname = ${IDENTITY.name}`, `\temail = ${IDENTITY.email}`,
   '[commit]', '\tgpgsign = false',
+  // Fixtures write loose refs and reflogs by hand (land-repos.mjs setRefs, `.git/refs/heads/*` in tests), which only the files format reads.
+  '[init]', '\tdefaultRefFormat = files',
   // A restored file keeps its mtime and size but not its inode or ctime; compare only those two.
   '[core]', '\tcheckStat = minimal',
   // Fixtures never convert line endings, whatever the system gitconfig says: no CRLF warning.
@@ -47,6 +52,13 @@ fs.writeFileSync(GLOBAL_CONFIG, [
   '',
 ].join('\n'));
 process.env.GIT_CONFIG_GLOBAL = GLOBAL_CONFIG;
+
+/**
+ * The test deadline: what a gate1 lineage or verdict check under test arms when the test is not
+ * about the deadline, so a slow git under a parallel suite never trips the deck's live 5 s one
+ * (lineage-slow-git L2). Finite, so a hung git still fails the test rather than hanging it.
+ */
+export const GIT_SLOW_MS = 120_000;
 
 /** key -> { dir, template, value, test }: `test` is the TestContext that last had `dir`. */
 const fixtures = new Map();

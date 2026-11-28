@@ -7,6 +7,7 @@
 
 import './no-open.mjs';
 import { gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
+import { seed } from '../../scripts/test/lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -34,36 +35,29 @@ const reread = (id) => listItems().find((item) => item.id === id);
 const deckLines = (id) => reread(id).replies.filter((message) => message.author === 'deck').map((message) => message.text);
 
 /**
- * A bare origin and `work`, the deck's clone, holding a plan on `feat/x` one commit past `pilot`, its slice owning
- * `deck/store-items.mjs`, and then the first landing over that file on `pilot`, as `landOn` makes it.
+ * A bare origin and `work`, the deck's clone on `pilot`, holding a plan one commit past `pilot`, its slice owning
+ * `deck/store-items.mjs`, and then the first landing over that file on `pilot`, as `landOn` makes it. The plan's
+ * commit is `feat/x`; `replanned`'s `feat/x` has merged that landing on top of it, as a replan merges pilot, and
+ * returns the merge as `merged`. One seed and one clone each.
  */
-function landed(t) {
-  return gitFixture(t, 'landing-recut:landed', (root) => {
-    const origin = path.join(root, 'origin.git');
+function landed(t, { replanned = false } = {}) {
+  return gitFixture(t, `landing-recut:${replanned ? 'replanned' : 'landed'}`, (root) => {
+    const plan = replanned ? 'plan' : 'feat/x';
+    const { origin, sha } = seed(root, [
+      { branch: 'pilot', files: { 'deck/store-items.mjs': 'one\n' }, message: 'deck/store-items.mjs' },
+      { branch: 'pilot', files: { 'docs/design/x/slices/S1.md': fs.readFileSync(SLICE, 'utf8') }, message: 'docs/design/x/slices/S1.md' },
+      { branch: plan, from: 'pilot', files: { [ARTEFACT]: '# X\n\n## 2. Spec\n\n| 1 |\n\n## 5. Locked decisions\n\n- L1\n\n## 8. Slices\n\n| S1 |\n' }, message: ARTEFACT },
+      { branch: 'pilot', files: { 'deck/store-items.mjs': 'changed deck/store-items.mjs\n' }, message: 'land deck/store-items.mjs' },
+      ...(replanned ? [{ branch: 'feat/x', from: plan, merge: ['pilot'], files: {}, message: "Merge remote-tracking branch 'origin/pilot' into feat/x" }] : []),
+    ]);
     const work = path.join(root, 'work');
-    git(root, 'init', '-q', '--bare', '-b', 'main', origin);
-    git(root, 'clone', '-q', origin, work);
-    const write = (file, text) => {
-      fs.mkdirSync(path.join(work, path.dirname(file)), { recursive: true });
-      fs.writeFileSync(path.join(work, file), text);
-      git(work, 'add', file);
-      git(work, 'commit', '-q', '-m', file);
-    };
-    write('deck/store-items.mjs', 'one\n');
-    write('docs/design/x/slices/S1.md', fs.readFileSync(SLICE, 'utf8'));
-    git(work, 'push', '-q', 'origin', 'HEAD:pilot');
-    git(work, 'checkout', '-q', '-b', 'feat/x');
-    write(ARTEFACT, '# X\n\n## 2. Spec\n\n| 1 |\n\n## 5. Locked decisions\n\n- L1\n\n## 8. Slices\n\n| S1 |\n');
-    git(work, 'push', '-q', 'origin', 'feat/x');
-    const plan = { artefact: ARTEFACT, branch: 'feat/x', sha: git(work, 'rev-parse', 'HEAD') };
-    landOn(work, 'deck/store-items.mjs');
-    return { work, plan };
+    git(root, 'clone', '-q', '-b', 'pilot', origin, work);
+    return { work, plan: { artefact: ARTEFACT, branch: 'feat/x', sha: sha[plan] }, merged: sha['feat/x'] };
   });
 }
 
-/** The landing: `file` changed on origin's `pilot`, from `work`. */
+/** The landing: `file`, tracked, changed on origin's `pilot`, from `work` on `pilot`. */
 function landOn(work, file, text = `changed ${file}\n`) {
-  git(work, 'checkout', '-q', '-B', 'pilot', 'origin/pilot');
   fs.writeFileSync(path.join(work, file), text);
   git(work, 'commit', '-q', '-am', `land ${file}`);
   git(work, 'push', '-q', 'origin', 'pilot');
@@ -147,14 +141,11 @@ test('a drift is noted once: a later landing repeats nothing, one over a new own
 
 test('after a replan the same drift is a new one, and is noted', async (t) => {
   tempDeck(t);
-  const { work, plan } = landed(t);
+  const { work, plan, merged } = landed(t, { replanned: true });
   const first = aLandedGate2(work);
   const ticket = signed(work, plan);
   await driftAfterLanding(first.id);
-  git(work, 'checkout', '-q', 'feat/x');
-  git(work, 'merge', '-q', '--no-edit', 'origin/pilot');
-  git(work, 'push', '-q', 'origin', 'feat/x');
-  await callTool('deck_ticket', { id: ticket.id, action: 'replan', sha: git(work, 'rev-parse', 'HEAD') });
+  await callTool('deck_ticket', { id: ticket.id, action: 'replan', sha: merged });
   const second = aGate2(work);
   settleLanding(second.id, { ok: true, sha: '5e6f7a8', line: 'landed feat/z on pilot at 5e6f7a8' });
   landOn(work, 'deck/store-items.mjs', 'changed again\n');
@@ -165,16 +156,13 @@ test('after a replan the same drift is a new one, and is noted', async (t) => {
 
 test('after a re-cut and a gate1 re-sign the same drift is a new one, and is noted', async (t) => {
   tempDeck(t);
-  const { work, plan } = landed(t);
+  const { work, plan, merged } = landed(t, { replanned: true });
   const first = aLandedGate2(work);
   const ticket = signed(work, plan);
   await driftAfterLanding(first.id);
   await callTool('deck_ticket', { id: ticket.id, action: 'recut' });
-  git(work, 'checkout', '-q', 'feat/x');
-  git(work, 'merge', '-q', '--no-edit', 'origin/pilot');
-  git(work, 'push', '-q', 'origin', 'feat/x');
   takeLive(ticket.id);
-  const gate1 = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: `Changed since ${plan.sha.slice(0, 7)}: pilot merged`, repo: work, ...plan, sha: git(work, 'rev-parse', 'HEAD'), locked: 3, slices: '| S1 |', sliceCount: 1, surface: false, ticket: ticket.id });
+  const gate1 = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: `Changed since ${plan.sha.slice(0, 7)}: pilot merged`, repo: work, ...plan, sha: merged, locked: 3, slices: '| S1 |', sliceCount: 1, surface: false, ticket: ticket.id });
   addReply(gate1.id, SIGN_OFF);
   resolveItem(gate1.id, 'Signed off.');
   assert.equal(reread(ticket.id).state, 'yellow');

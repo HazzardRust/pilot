@@ -15,7 +15,7 @@ import path from 'node:path';
 import { split, listOf } from './measure-prompt.mjs';
 
 export const SHELL_RULES = Object.freeze([
-  'Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.',
+  'Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove with `pilot worktrees remove`.',
   'Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).',
 ]);
 
